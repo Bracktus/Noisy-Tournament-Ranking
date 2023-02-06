@@ -28,7 +28,7 @@ def valid_match(match):
     return grader != p1 and grader != p2 
 
 
-n = 30
+n = 50
 students = range(n)
 pairs = list(pl.combination(students, 2))
 all_assignments = filter(valid_match, product(students, pairs))
@@ -62,30 +62,33 @@ for asin in all_assignments:
 
     pair_contains[(p1, p2)].append(var)
 
-
 c = pl.LpVariable("c", lowBound=0, cat="Integer")
 for asins in student_contains.values():
     prob += pl.lpSum(asins) <= c
 
+
 for asins in pair_contains.values():    
     prob += pl.lpSum(asins) == 1
 
-sums = [student_assignments[grader] for grader in students]
-abs_vars = []
-for i, sum_pair in enumerate(product(sums, sums)):
-    sum1, sum2 = sum_pair
+
+for i, grader_pair in enumerate(product(students, students)):
+    g1, g2 = grader_pair
+    if g1 == g2:
+        continue
+    
+    sum1 = student_assignments[g1]
+    sum2 = student_assignments[g2]
 
     abs_var = pl.LpVariable(f"abs_{i}", lowBound=0, cat="Integer")
     prob += abs_var >= pl.lpSum(sum1) - pl.lpSum(sum2)
     prob += abs_var >= pl.lpSum(sum2) - pl.lpSum(sum1)
     prob += abs_var <= 1
-    abs_vars.append(abs_var)
 
 #C is our objective function that we're trying to minimise
 prob += c
 
 # prob.solve(pl.PULP_CBC_CMD(msg=True, timeLimit=120))
-prob.solve(pl.GUROBI_CMD(msg=True, timeLimit=120))
+prob.solve(pl.GUROBI_CMD(msg=True, timeLimit=360))
 
 counter = defaultdict(int)
 for k in choices:
