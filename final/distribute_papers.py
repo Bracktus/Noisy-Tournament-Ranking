@@ -13,7 +13,7 @@ We want the paper distribution algo to:
 
 There are n C 2 = n*(n-1) / 2. matchups.
 That means if we want a complete picture we'll
-have to assign each student (n - 1)/2 pairs
+have to assign each student around (n - 1)/2 pairs
 
 If we were to assign every student every matchup (exculding their own).
 
@@ -27,10 +27,16 @@ def valid_match(match):
     grader, (p1, p2) = match
     return grader != p1 and grader != p2 
 
+print("Starting model formulation...")
 
-n = 50
+n = 101
 students = range(n)
+
+# We could load in pairs from a data file. 
+# Since there will be less edges than the complete graph (what we are doing here)
+# This will greatly reduce the model formulation/solving time!
 pairs = list(pl.combination(students, 2))
+
 all_assignments = filter(valid_match, product(students, pairs))
 
 prob = pl.LpProblem("Paper_Distribution", pl.LpMinimize)
@@ -39,7 +45,7 @@ prob = pl.LpProblem("Paper_Distribution", pl.LpMinimize)
 choices = {} # Lookup using (grader, p1, p2)
 
 # These are defined to avoid redunant looping
-# Contains all the valid assingments for a student 
+# Contains all the valid assignments for a student 
 student_assignments = defaultdict(list) 
 
 # Contains all the possible pairs for a grader that contain another student
@@ -62,14 +68,8 @@ for asin in all_assignments:
 
     pair_contains[(p1, p2)].append(var)
 
-c = pl.LpVariable("c", lowBound=0, cat="Integer")
-for asins in student_contains.values():
-    prob += pl.lpSum(asins) <= c
-
-
 for asins in pair_contains.values():    
     prob += pl.lpSum(asins) == 1
-
 
 for i, grader_pair in enumerate(product(students, students)):
     g1, g2 = grader_pair
@@ -84,11 +84,20 @@ for i, grader_pair in enumerate(product(students, students)):
     prob += abs_var >= pl.lpSum(sum2) - pl.lpSum(sum1)
     prob += abs_var <= 1
 
+c = pl.LpVariable("c", lowBound=0, cat="Integer")
+for asins in student_contains.values():
+    prob += pl.lpSum(asins) <= c
+
+
 #C is our objective function that we're trying to minimise
 prob += c
 
+print("Model formulation complete")
+print("Starting model solving...")
+
 # prob.solve(pl.PULP_CBC_CMD(msg=True, timeLimit=120))
-prob.solve(pl.GUROBI_CMD(msg=True, timeLimit=360))
+# prob.solve(pl.GUROBI_CMD(msg=True, timeLimit=360))
+prob.solve(pl.GUROBI_CMD(msg=True))
 
 counter = defaultdict(int)
 for k in choices:
