@@ -39,13 +39,15 @@ prob = pl.LpProblem("Paper_Distribution", pl.LpMinimize)
 choices = {} # Lookup using (grader, p1, p2)
 
 # These are defined to avoid redunant looping
-
 # Contains all the valid assingments for a student 
 student_assignments = defaultdict(list) 
 
 # Contains all the possible pairs for a grader that contain another student
 # For example student_contains[(0, 3)] = [0_(1,3), 0_(2,3), 0_(3,4), 0_(3,5)] 
 student_contains = defaultdict(list) 
+
+# Contains all the students a pair could be assigned to
+pair_contains = defaultdict(list)
 
 for asin in all_assignments:
     grader, (p1, p2) = asin
@@ -58,45 +60,15 @@ for asin in all_assignments:
     student_contains[(grader, p1)].append(var)
     student_contains[(grader, p2)].append(var)
 
+    pair_contains[(p1, p2)].append(var)
 
-for pair in pairs:
-    # For every pair,
-    # iterate over the students that have that pair,
-    # add a constraint saying sum(x_ijk) = 1 
-    # where jk is the pair and i is the student
-    p1, p2 = pair
-    valid_students = (stud for stud in range(n) if stud != p1 and stud != p2)
-    prob += pl.lpSum(choices[(vs, pair)] for vs in valid_students) == 1
 
 c = pl.LpVariable("c", lowBound=0, cat="Integer")
 for asins in student_contains.values():
-    print(asins)
     prob += pl.lpSum(asins) <= c
 
-# for grader in students:
-
-#     for gradee in students:
-
-#         acc_sum = []
-
-#         if grader == gradee:
-#             continue
-
-#         for opponnent in range(n):
-#             if gradee == opponnent or grader == opponnent:
-#                 continue
-#             elif gradee < opponnent:
-#                 asin = (grader, (gradee, opponnent))
-#             elif gradee > opponnent:
-#                 asin = (grader, (opponnent, gradee))
-#             else:
-#                 raise Exception(f"Invalid matchup, {grader}: {gradee} vs {opponnent}")
-
-#             acc_sum.append(choices[asin])
-
-#         print(acc_sum)
-#         prob += pl.lpSum(acc_sum) <= c
-
+for asins in pair_contains.values():    
+    prob += pl.lpSum(asins) == 1
 
 sums = [student_assignments[grader] for grader in students]
 abs_vars = []
