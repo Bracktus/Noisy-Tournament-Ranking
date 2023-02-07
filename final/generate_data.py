@@ -1,6 +1,7 @@
-from random import gauss, random
+from random import gauss, random, shuffle
 from collections import defaultdict
 from distribute_papers import PaperDistibutor
+from rankers import copeland, kendall_tau
 
 class TournamentGenerator():
 
@@ -32,7 +33,8 @@ class TournamentGenerator():
 
     def generate_tournament(self):
         """
-        This creates a set of edges with 
+        This returns a dictionary. 
+        The keys are the graders, the values are the results of the matches that the student marked.
         """
         # Each student is now assigned a score
         self.grades = {s: self.get_score() for s in range(self.num_students)}
@@ -62,8 +64,14 @@ class TournamentGenerator():
 
     def get_results(self):
         return self.tournament_results
+
+    def get_true_ranking(self):
+        true_ranking = self.grades.items()
+        true_ranking = sorted(true_ranking, key=lambda i: i[1], reverse=True)
+        true_ranking = [student for (student, _) in true_ranking]
+        return true_ranking
                             
-distributor = PaperDistibutor(11)
+distributor = PaperDistibutor(19)
 distributor.formulate_model()
 distributor.solve()
 
@@ -71,3 +79,17 @@ assignments = distributor.get_solution()
 tourney_generator = TournamentGenerator(assignments)
 tourney_generator.generate_tournament()
 tourney_generator.print_tournament()
+tournament = tourney_generator.get_results()
+
+t1 = copeland(tournament)
+t2 = tourney_generator.get_true_ranking()
+t3 = t2.copy()
+shuffle(t3)
+
+
+print(kendall_tau(t2, t1))
+print(kendall_tau(t2, t3))
+
+print(t1)
+print(t2)
+print(t3)
