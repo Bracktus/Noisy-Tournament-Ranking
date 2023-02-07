@@ -1,79 +1,73 @@
 from random import gauss, random
-from itertools import product
 from collections import defaultdict
+from distribute_papers import PaperDistibutor
 
+class TournamentGenerator():
 
-def get_score():
-    """
-    Generates a score test between 0 and 1 along a
-    gaussian distribution.
+    def __init__(self, assignments):
+        self.assignments = assignments
+        self.num_students = len(assignments)
 
-    With mean 0.5 and stdev 0.3
-    """
-    score = gauss(0.5, 0.3)
-    return max(0, min(score, 1))
+        self.grades = {}
+        self.tournament_results = defaultdict(list)
 
+        self.tournament_generated = False
 
-def get_students(n):
-    """
-    Generates a dictionary of students with
-    their corresponding test scores
-    """
-    return {i: get_score() for i in range(n)}
+    def get_score(self):
+        """
+        Generates a score test between 0 and 1 along a gaussian distribution. With mean 0.5 and stdev 0.3
+        """
+        score = gauss(0.5, 0.3)
+        return max(0, min(score, 1))
 
+ 
+    def get_prob_correct(self, score):
+        """
+        Converts a student's score into a probability of them grading a matchup correctly.
+        If they were purely guessing, then the probability would be 0.5.
+        Therefore, we can say the probability of them getting it correct would lie between [0.5 - 1].
+        Assuming they aren't malicious
+        """
+        return score * 0.5 + 0.5
 
-def get_prob_correct(score):
-    """
-    Converts a student's score
-    into a probability of them grading a matchup correctly.
+    def generate_tournament(self):
+        """
+        This creates a set of edges with 
+        """
+        # Each student is now assigned a score
+        self.grades = {s: self.get_score() for s in range(self.num_students)}
+        for grader in self.assignments:
+            matchups = self.assignments[grader]
+            grader_score = self.grades[grader]
+            grader_prob = self.get_prob_correct(grader_score)
+            
+            for p1, p2 in matchups:
+                winner, loser = (p1, p2) if self.grades[p1] > self.grades[p2] else (p2, p1)
+                if grader_prob > random():
+                    result = (winner, loser)
+                else:
+                    result = (loser, winner)
 
-    If they were purely guessing,
-    then the probability would be 0.5.
+                self.tournament_results[grader].append(result)
 
-    Therefore, we can say the probability of them getting it correct
-    would lie between [0.5 - 1].
-    Assuming they aren't malicious
-    """
-    return score * 0.5 + 0.5
+        self.tournament_generated = True
 
+    def print_tournament(self):
+        if not self.tournament_generated:
+            raise AttributeError("Tournament not generated")
+            
+        for student in self.tournament_results:
+            matchups = self.tournament_results[student]
+            print(f"{student}: {matchups}: {self.grades[student]}")
 
-def valid_match(grader, stud1, stud2):
-    """
-    It's a valid match if
-    - A grader doesn't mark their own paper.
-    - student2 > student1, because (a,b) == (b,a) so we don't
-      need duplicates
-    """
-    return grader != stud1 and grader != stud2 and stud2 > stud1
+    def get_results(self):
+        return self.tournament_results
+                            
+distributor = PaperDistibutor(11)
+distributor.formulate_model()
+distributor.solve()
 
-
-n = 300
-# Students is a mapping from a student number to their grade
-students = get_students(n)
-pairings = product(students, students, students)
-
-results = {student_num: [] for student_num in students}
-wrong_count = defaultdict(int)
-
-for pairing in pairings:
-    grader, s1, s2 = pairing
-
-    if not valid_match(grader, s1, s2):
-        continue
-
-    grader_score = students[grader]
-    grader_prob = get_prob_correct(grader_score)
-
-    winner, loser = (s1, s2) if students[s1] > students[s2] else (s2, s1)
-
-    if grader_prob > random():
-        results[grader].append((winner, loser))
-    else:
-        wrong_count[grader] += 1
-        results[grader].append((loser, winner))
-
-
-print(results)
-print(students)
-print(wrong_count)
-print(len(results[0]))
+assignments = distributor.get_solution()
+tourney_generator = TournamentGenerator(assignments)
+tourney_generator.generate_tournament()
+tourney_generator.print_tournament()

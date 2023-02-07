@@ -2,7 +2,6 @@ from itertools import product
 from collections import defaultdict
 import pulp as pl
 
-
 """
 We want the paper distribution algo to:
 
@@ -22,7 +21,17 @@ Then they would be assigned (n*(n-1) / 2) - (n - 1) matchups.
 
 "make it work, make it right, make it fast"
 """
+
+# TODO: Run this algo for n = 1,2..50 and save the results
+#       Then whenever we run this, if the file already exists, then just spit that out instead
+
 class PaperDistibutor():
+    # ---Usage ---
+    # distributor = PaperDistibutor(30)
+    # distributor.formulate_model()
+    # distributor.solve(show_msg=True)
+    # distributor.print_solution()
+
     def __init__(self, n, pairs=None):
         self.prob = pl.LpProblem("Paper_Distribution", pl.LpMinimize)
         self.formulated = False
@@ -38,10 +47,9 @@ class PaperDistibutor():
     def formulate_model(self):
         print("Formulating model...")
 
-        valid_match = lambda m : m[0] != m[1] and m[0] != m[1]
+        valid_match = lambda m : m[0] != m[1][0] and m[0] != m[1][1]
         all_assignments = filter(valid_match, product(self.students, self.pairs))
 
-        # These are defined to avoid redunant looping
         # Contains all the valid assignments for a student 
         student_assignments = defaultdict(list) 
 
@@ -73,8 +81,7 @@ class PaperDistibutor():
             # Every student is assigned a number of papers.
             # The difference in the number of papers assigned to each student
             # must not differ by more than 1
-
-            # For example [a:5, b:5, c:3] is invalid since 5 - 3 =2
+            # For example [a:5, b:5, c:3] is invalid since 5 - 3 = 2
             # but [a:5, b:5, c:4] is valid
             g1, g2 = grader_pair
             if g1 == g2:
@@ -90,6 +97,11 @@ class PaperDistibutor():
 
         c = pl.LpVariable("c", lowBound=0, cat="Integer")
         for asins in student_contains.values():
+            # Every student marks an amount of another student's paper.
+            # For example for the assingment: 
+            # a:[(b,c), (c, d)]
+            # (a,b) = 1, (a,c) = 2 and (a,d) = 1 since a marks b's paper twice
+            # So here were looping over all such combinations and setting c to be the maximum of these values
             self.prob += pl.lpSum(asins) <= c
 
         #C is our objective function that we're trying to minimise
@@ -129,8 +141,3 @@ class PaperDistibutor():
 
         return solution_dict
 
-
-distributor = PaperDistibutor(30)
-distributor.formulate_model()
-distributor.solve(show_msg=True)
-distributor.print_solution()
