@@ -1,7 +1,7 @@
 from random import gauss, random, shuffle
 from collections import defaultdict
 from distribute_papers import PaperDistibutor
-from rankers import copeland, kendall_tau
+from rankers import copeland, kendall_tau, ranking_to_weights
 
 class TournamentGenerator():
 
@@ -71,7 +71,7 @@ class TournamentGenerator():
         true_ranking = [student for (student, _) in true_ranking]
         return true_ranking
                             
-distributor = PaperDistibutor(19)
+distributor = PaperDistibutor(29)
 distributor.formulate_model()
 distributor.solve()
 
@@ -81,15 +81,24 @@ tourney_generator.generate_tournament()
 tourney_generator.print_tournament()
 tournament = tourney_generator.get_results()
 
-t1 = copeland(tournament)
-t2 = tourney_generator.get_true_ranking()
-t3 = t2.copy()
+t1 = tourney_generator.get_true_ranking()
+
+t2 = copeland(tournament)
+weights = ranking_to_weights(t1)
+t2w = copeland(tournament, weights=weights)
+
+t3 = t1.copy()
 shuffle(t3)
 
+print(f"true:\t{t1}")
+print(f"copeland:\t {t2}")
+print(f"weighted copeland:\t {t2w}")
+print(f"random:\t {t3}")
 
-print(kendall_tau(t2, t1))
-print(kendall_tau(t2, t3))
 
-print(t1)
-print(t2)
-print(t3)
+print(f"The distance between the true ranking and the copeland ranking is: {kendall_tau(t1, t2)}")
+print(f"The distance between the true ranking and the weighted copeland ranking is: {kendall_tau(t1, t2w)}")
+print(f"The distance between the true ranking and a random ranking is: {kendall_tau(t1,t3)}")
+
+print()
+print(f"The distance between the copeland ranking and the weighted copeland ranking is: {kendall_tau(t2, t2w)}")

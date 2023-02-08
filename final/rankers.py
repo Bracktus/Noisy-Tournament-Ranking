@@ -20,31 +20,38 @@ def kendall_tau(r1, r2):
 
             if a or b:
                 inversions += 1
+    n = len(r1)
+    normalised = (2 * inversions ) / (n * (n - 1))
+    return normalised
 
-    return inversions
+def ranking_to_weights(ranking):
+    """converts a ranking to a mapping of player to weight"""
+    n = len(ranking)
+    k = (n*(n+1))/2
+    weights = {grader: (n-idx)/k for idx, grader in enumerate(ranking)}
+    print(weights)
+    return weights
 
-
-def copeland(tournament):
+def copeland(tournament, weights=None):
     """
     The copeland score of a student is:
     The node's indegree - the node's outdegree
+    Optionally is weighted
     """
     matchups = tournament.values()
     matchups = [matchup for sublist in matchups for matchup in sublist]
     copeland_scores = defaultdict(int)
     for grader in tournament:
-
+        w = 1 if weights == None else weights[grader]
         for match in matchups:
-
             winner, loser = match
             if grader == winner:
-                copeland_scores[grader] += 1
+                copeland_scores[grader] += w
             elif grader == loser:
-                copeland_scores[grader] -= 1
+                copeland_scores[grader] -= w
 
     result = copeland_scores.items()
     result = sorted(result, key=lambda i : i[1], reverse=True)
     result = [student for (student, _) in result]
     return result
-
 
