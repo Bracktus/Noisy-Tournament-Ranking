@@ -1,4 +1,5 @@
 from collections import defaultdict
+from simulated_annealing import calculate_kemeny
 
 def kendall_tau(r1, r2):
     """
@@ -29,7 +30,6 @@ def ranking_to_weights(ranking):
     n = len(ranking)
     k = (n*(n+1))/2
     weights = {grader: (n-idx)/k for idx, grader in enumerate(ranking)}
-    print(weights)
     return weights
 
 def copeland(tournament, weights=None):
@@ -54,4 +54,20 @@ def copeland(tournament, weights=None):
     result = sorted(result, key=lambda i : i[1], reverse=True)
     result = [student for (student, _) in result]
     return result
+
+def kemeny(tournament):
+    matchups = tournament.values()
+    matchups = set([matchup for sublist in matchups for matchup in sublist])
+    n = len(tournament)
+    inital_sol = [i for i in range(n)]
+    solution = calculate_kemeny(
+        inital_solution=inital_sol, 
+        tourney=matchups,
+        initial_temperature=0.9,
+        temperature_length=100,
+        cooling_ratio=0.99,
+        num_non_improve=1000000
+    )
+    return solution
+    
 
