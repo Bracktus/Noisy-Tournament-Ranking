@@ -3,6 +3,7 @@ from itertools import combinations
 def kendall_tau(r1, r2):
     """
     Returns the kendall tau distance between 2 rankings
+    https://stats.stackexchange.com/questions/168602/whats-the-kendall-taus-distance-between-these-2-rankings
     """
     # Direction translation of:
     # https://en.wikipedia.org/wiki/Kendall_tau_distance#Computing_the_Kendall_tau_distance
