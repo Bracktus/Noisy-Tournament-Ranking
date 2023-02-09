@@ -6,7 +6,7 @@ from metrics import kendall_tau
 
 
 def main():
-    distributor = PaperDistibutor(6)
+    distributor = PaperDistibutor(30)
     distributor.formulate_model()
     distributor.solve()
 
@@ -28,13 +28,12 @@ def main():
     t4 = kemeny(tournament)
     t5 = rbtl(tournament)
 
-    print(f"true: \n\t{t1}")
-    print(f"copeland: \n\t{t2}")
-    print(f"weighted copeland: \n\t{t2w}")
-    print(f"kemeny: \n\t{t4}")
-    print(f"rbtl: \n\t{t5}")
-
-    print(f"random: \n\t{t3}")
+    print(f"true: \n{t1}")
+    print(f"copeland: \n{t2}")
+    print(f"weighted copeland: \n{t2w}")
+    print(f"kemeny: \n{t4}")
+    print(f"rbtl: \n{t5}")
+    print(f"random: \n{t3}")
 
     print(f"The distance between the true ranking and the copeland ranking is: {kendall_tau(t1, t2)}")
     print(f"The distance between the true ranking and the weighted copeland ranking is: {kendall_tau(t1, t2w)}")

@@ -19,8 +19,6 @@ def kendall_tau(r1, r2):
         if a * b < 0:
             inversions += 1
 
-    print(inversions)
     normalised = (2 * inversions ) / (n * (n - 1))
     return normalised
-
 

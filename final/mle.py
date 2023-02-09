@@ -1,4 +1,4 @@
-from scipy.optimize import minimize
+from scipy.optimize import minimize, Bounds
 import numpy as np
 
 
@@ -15,7 +15,7 @@ def obj_func(skill_levels, tournament):
             p_ijk = np.log(1 + np.exp(-(0.5*i + 0.5)*(j - k)))
             likelihood_f = np.append(likelihood_f, p_ijk)
 
-    return np.prod(likelihood_f)
+    return np.sum(likelihood_f)
 
 
 def mle(tournament, inital_guess=None):
@@ -24,4 +24,5 @@ def mle(tournament, inital_guess=None):
         inital_guess = [0.5 for _ in range(tourney_len)]
 
     f = lambda guess : obj_func(guess, tournament)
-    return minimize(f, inital_guess)
+    bounds = Bounds(0, 10000)
+    return minimize(f, inital_guess, bounds=bounds)
