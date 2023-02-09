@@ -1,29 +1,7 @@
 from collections import defaultdict
 from simulated_annealing import calculate_kemeny
+from mle import mle
 
-def kendall_tau(r1, r2):
-    """
-    Returns the kendall tau distance between 2 rankings
-    """
-    # Direction translation of:
-    # https://en.wikipedia.org/wiki/Kendall_tau_distance#Computing_the_Kendall_tau_distance
-
-    if len(r1) != len(r2):
-        raise ValueError("Length of rankings aren't equal")
-    
-    rank_len = len(r1)
-    inversions = 0
-
-    for i in range(rank_len):
-        for j in range(i + 1, rank_len):
-            a = r1[i] < r1[j] and r2[i] > r2[j]
-            b = r1[i] > r1[j] and r2[i] < r2[j]
-
-            if a or b:
-                inversions += 1
-    n = len(r1)
-    normalised = (2 * inversions ) / (n * (n - 1))
-    return normalised
 
 def ranking_to_weights(ranking):
     """converts a ranking to a mapping of player to weight"""
@@ -50,17 +28,17 @@ def copeland(tournament, weights=None):
             elif grader == loser:
                 copeland_scores[grader] -= w
 
-    result = copeland_scores.items()
-    result = sorted(result, key=lambda i : i[1], reverse=True)
-    result = [student for (student, _) in result]
-    return result
+    ranking = copeland_scores.items()
+    ranking = sorted(ranking, key=lambda i : i[1], reverse=True)
+    ranking = [student for (student, _) in ranking]
+    return ranking
 
 def kemeny(tournament):
     matchups = tournament.values()
     matchups = set([matchup for sublist in matchups for matchup in sublist])
     n = len(tournament)
     inital_sol = [i for i in range(n)]
-    solution = calculate_kemeny(
+    ranking = calculate_kemeny(
         inital_solution=inital_sol, 
         tourney=matchups,
         initial_temperature=0.9,
@@ -68,6 +46,12 @@ def kemeny(tournament):
         cooling_ratio=0.99,
         num_non_improve=1000000
     )
-    return solution
+    return ranking
     
+def rbtl(tournament): 
+    model = mle(tournament)     
+    ranking = enumerate(model.x)
+    ranking = sorted(ranking, key=lambda i: i[1], reverse=True)
+    ranking = [student for (student, _) in ranking]
+    return ranking
 

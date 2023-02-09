@@ -75,6 +75,7 @@ class PaperDistibutor():
 
         for asins in pair_contains.values():    
             # Each pair is only assigned once
+            # self.prob += pl.lpSum(asins) >= 1
             self.prob += pl.lpSum(asins) == 1
 
         for i, grader_pair in enumerate(product(self.students, self.students)):
