@@ -1,6 +1,7 @@
 import random
 import math
 
+
 def kemeny_score(ranking, tourney):
     score = 0
     for i in range(len(ranking)):
@@ -43,6 +44,9 @@ def calculate_kemeny(inital_solution,
     """
     Calculates an approximation of the best kemeny ranking using simulated annealing
     """
+
+    #Conversion to set for fast lookup
+    tourney = set(tourney)
 
     # Set the inital and the best solutions
     curr_sol = inital_solution

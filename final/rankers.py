@@ -10,6 +10,7 @@ def ranking_to_weights(ranking):
     weights = {grader: (n-idx)/k for idx, grader in enumerate(ranking)}
     return weights
 
+
 def copeland(tournament, weights=None):
     """
     The copeland score of a student is:
@@ -34,8 +35,12 @@ def copeland(tournament, weights=None):
     return ranking
 
 def kemeny(tournament):
+    """
+    Finds an approximation of the kemeny ranking of a tournament
+    through simulated annealing.
+    """
     matchups = tournament.values()
-    matchups = set([matchup for sublist in matchups for matchup in sublist])
+    matchups = [matchup for sublist in matchups for matchup in sublist]
     n = len(tournament)
     inital_sol = [i for i in range(n)]
     ranking = calculate_kemeny(
@@ -48,10 +53,14 @@ def kemeny(tournament):
     )
     return ranking
     
+
 def rbtl(tournament): 
-    model = mle(tournament)     
-    ranking = enumerate(model.x)
+    """
+    Finds the refereed bradley-terry model ranking of a tournament 
+    through maximum likelihood estimation.
+    """
+    ranking = mle(tournament)     
+    ranking = enumerate(ranking)
     ranking = sorted(ranking, key=lambda i: i[1], reverse=True)
     ranking = [student for (student, _) in ranking]
     return ranking
-
