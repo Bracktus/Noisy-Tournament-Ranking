@@ -41,8 +41,7 @@ def kemeny(tournament):
     """
     matchups = tournament.values()
     matchups = [matchup for sublist in matchups for matchup in sublist]
-    n = len(tournament)
-    inital_sol = [i for i in range(n)]
+    inital_sol = [i for i in range(len(tournament))]
     ranking = calculate_kemeny(
         inital_solution=inital_sol, 
         tourney=matchups,

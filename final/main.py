@@ -1,16 +1,19 @@
 from generate_tourney import TournamentGenerator
-from distribute_papers import PaperDistibutor
+from distribute_papers import PaperDistributor
 from rankers import copeland, ranking_to_weights, kemeny, rbtl
 from random import shuffle
 from metrics import kendall_tau
+from graph_utils import connected_graph
 
 
 def main():
-    distributor = PaperDistibutor(31)
-    distributor.formulate_model()
-    distributor.solve()
+    n = 35
+    pairs = connected_graph(n, 13)
 
+    # distributor = PaperDistributor(n)
+    distributor = PaperDistributor(n, pairs)
     assignments = distributor.get_solution()
+
     tourney_generator = TournamentGenerator(assignments)
     tourney_generator.generate_tournament()
     tourney_generator.print_tournament()

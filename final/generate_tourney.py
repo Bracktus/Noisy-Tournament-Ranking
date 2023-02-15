@@ -39,7 +39,10 @@ class TournamentGenerator():
         for grader in self.assignments:
             matchups = self.assignments[grader]
             grader_score = self.grades[grader]
-            grader_prob = self.get_prob_correct(grader_score)
+            grader_prob = grader_score
+
+            # Uncommenting this line assumes unmalicious students
+            # grader_prob = self.get_prob_correct(grader_score)
             
             for p1, p2 in matchups:
                 winner, loser = (p1, p2) if self.grades[p1] > self.grades[p2] else (p2, p1)

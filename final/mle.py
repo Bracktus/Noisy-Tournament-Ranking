@@ -41,6 +41,8 @@ def mle(tournament, inital_guess=None):
     inital_guess = ab + inital_guess
     f = lambda guess : obj_func(guess, tournament)
     bounds = Bounds(0, 1)
+
     ranking = minimize(f, inital_guess, bounds=bounds).x
-    ranking = ranking[2:] # The first 2 values are a and b
+    ranking = ranking[2:] # The first 2 values are a and b, we want the rest
     return ranking
+
