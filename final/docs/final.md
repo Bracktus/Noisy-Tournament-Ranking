@@ -2,31 +2,56 @@
 
 Let $V$ be the set of n students.
 
-$V = \{1, 2, 3 \dots n\}$
+$$V = \{v_{1}, v_{2}, v_{3} \dots v_{n}\}$$
 
 Let $E$ be the set of matchups.
 
-$E \subset V \times V$ where $\forall (a, b) \in E, a \neq b$
+$(v_{a}, v_{b}) \in E$ means that student $v_{a}$'s paper is paired against player $v_{b}$'s paper.
 
-$(a, b) \in E$ means that student $a$'s paper is paired against player $b$'s paper.
+$$E \subset V \times V \text{ where } \forall (v_{a}, v_{b}) \in E, v_{a} \neq v_{b}$$ 
 
 Let $A$ be the set of all assignments.
 
-$A \subset E \times V$ where $\forall (i,j,k) \in A, i \neq j \neq k$
+$(v_{i},v_{j},v_{k}) \in A$ means that student $v_{i}$ marks the matchup $(v_{j}, v_{k}) \in E.$
 
-$(i,j,k) \in A$ means that student $i$ marks the matchup $(j, k) \in E.$
+$$A \subset E \times V \text{ where } \forall (v_{i},v_{j},v_{k}) \in A, v_{i} \neq v_{j} \neq k$$
 
 Each student $v \in V$ has a score $t(v)$.
 
-$t: V \rightarrow [0, 1]$
+$$t: V \rightarrow [0, 1]$$
 
 We can define a relation $\preceq_{t}$ over $V$. 
 
-$\forall v, v' \in V, v \preceq_{t} v' \text{ iff } t(v) \leq t(v')$
+$$\forall v, v' \in V, v \preceq_{t} v' \text{ iff } t(v) \leq t(v')$$
 
 ## Our problem is as follows:
 
 Given $V, E, A$ find a scoring function $t'(v)$ such that the total order defined by $\preceq_{t'}$ is 'close to' the total order defined by $\preceq_{t}$.
+
+## For example let's take 4 students
+
+$$V = \{a, b, c, d\}$$
+
+$$E = \{(a,b), (a,c), (a,d), (b,c), (b,d), (c,d)\}$$
+
+$$
+\begin{aligned}
+A = \{ & (c, a, b), (d, a, b), (b, a, c), (d, a, c), \\
+       & (b, a, d), (c, a, d), (a, b, c), (d, b, c), \\
+       & (a, b, d), (c, b, d), (a, c, d), (b, c, d) \}
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+& t(a) = 0.72 \\
+& t(b) = 0.32 \\
+& t(c) = 0.95 \\
+& t(d) = 0.45 \\
+\end{aligned}
+$$
+
+$$ b \preceq_{t} d \preceq_{t} a \preceq_{t} c $$
 
 ## How do we obtain $A$?
 
@@ -82,3 +107,17 @@ $\forall (a, b) \in V \times V, a \neq b, |f(a) - f(b)| \leq 1$
 Let $s_{a}(b) = \sum_{v \in V} X_{a,b,v}$
 
 $\text{ minimise }  max(\{s_{a}(b) | (a, b) \in V \times V, a \neq b\})$
+
+
+## Something to think about
+
+In our first model of students grading, we assumed that marking skill was a function of player skill.
+Specifically grading\_skill = 0.5 * player\_skill + 0.5
+This is a mapping from [0 - 1] to [0.5 - 1]. This assumes that players with a score of 0 are purely guessing.
+
+However, let's take a maths exam. If a player got 0% on the exam, and was 100% confident in their answers, and each question was multiple choice. Then they would always mark the matchup incorrectly. In this case grading\_skill = player\_skill.
+
+
+But what about a non-objective marking. For example a history essay. In this case would we keep the same model? Would the student guess?
+
+Also would a student who got 0% on a maths exam be 100% confident on their paper?
