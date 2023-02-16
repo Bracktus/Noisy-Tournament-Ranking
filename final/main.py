@@ -7,15 +7,15 @@ from graph_utils import connected_graph
 
 
 def main():
-    n = 35
-    pairs = connected_graph(n, 13)
+    n = 31
+    pairs = connected_graph(n, 10)
 
     # distributor = PaperDistributor(n)
     distributor = PaperDistributor(n, pairs)
     assignments = distributor.get_solution()
 
     tourney_generator = TournamentGenerator(assignments)
-    tourney_generator.generate_tournament()
+    tourney_generator.generate_tournament(malicious=True)
     tourney_generator.print_tournament()
     tournament = tourney_generator.get_results()
 

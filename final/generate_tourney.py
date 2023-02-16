@@ -29,20 +29,22 @@ class TournamentGenerator():
         """
         return score * 0.5 + 0.5
 
-    def generate_tournament(self):
+    def generate_tournament(self, malicious=False):
         """
         This returns a dictionary. 
         The keys are the graders, the values are the results of the matches that the student marked.
         """
         # Each student is now assigned a score
         self.grades = {s: self.get_score() for s in range(self.num_students)}
+
         for grader in self.assignments:
             matchups = self.assignments[grader]
             grader_score = self.grades[grader]
-            grader_prob = grader_score
 
-            # Uncommenting this line assumes unmalicious students
-            # grader_prob = self.get_prob_correct(grader_score)
+            if malicious:
+                grader_prob = grader_score
+            else:
+                grader_prob = self.get_prob_correct(grader_score)
             
             for p1, p2 in matchups:
                 winner, loser = (p1, p2) if self.grades[p1] > self.grades[p2] else (p2, p1)
