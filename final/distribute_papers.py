@@ -156,14 +156,14 @@ class IterativePaperDistributor():
 
     def _update_player_indexes(self):
         cache = {}
-        for idx, p in self.ranking:
+        for idx, p in enumerate(self.ranking):
             cache[p] = idx
         return cache
 
     def _formulate_model(self):
 
         def valid_match(m):
-            grader, p1, p2 = m
+            grader, (p1, p2) = m
             diff = grader != p1 and grader != p2
             unseen1 = (p1, p2) not in self.past_tourneys[grader]
             unseen2 = (p2, p1) not in self.past_tourneys[grader]
@@ -262,12 +262,13 @@ class IterativePaperDistributor():
     def calc_uncert(self, p1, p2):
         i1 = self.player_indexes[p1]
         i2 = self.player_indexes[p2]
-        # A shorter distance = more uncertainty
-        pass
 
-        return abs(i1 - i2)
+        n = len(self.students)
+        return (n - abs(i1 - i2)) / n
 
 
     def calc_skill(self, student):
-        return self.player_indexes[student]
+        idx = self.player_indexes[student]
+        n = len(self.students)
+        return (n - idx)/n
         
