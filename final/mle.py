@@ -26,23 +26,22 @@ def obj_func(skill_levels, tournament):
             j = skill_levels[p1]
             k = skill_levels[p2]
 
-            p_ijk = np.log(1 + np.exp(-(a*i + b)*(j - k)))
+            p_ijk = np.log(1 + np.exp(-(a * i + b) * (j - k)))
             likelihood_f = np.append(likelihood_f, p_ijk)
 
     return np.sum(likelihood_f)
 
 
 def mle(tournament, inital_guess=None):
-    tourney_len = len(tournament) 
+    tourney_len = len(tournament)
     if inital_guess == None:
         inital_guess = [0.5 for _ in range(tourney_len)]
 
     ab = [1, 1]
     inital_guess = ab + inital_guess
-    f = lambda guess : obj_func(guess, tournament)
+    f = lambda guess: obj_func(guess, tournament)
     bounds = Bounds(0, 1)
 
     ranking = minimize(f, inital_guess, bounds=bounds).x
-    ranking = ranking[2:] # The first 2 values are a and b, we want the rest
+    ranking = ranking[2:]  # The first 2 values are a and b, we want the rest
     return ranking
-

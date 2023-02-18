@@ -22,7 +22,8 @@ Then they would be assigned (n*(n-1) / 2) - (n - 1) matchups.
 "make it work, make it right, make it fast"
 """
 
-class PaperDistributor():
+
+class PaperDistributor:
     # ---Usage ---
     # distributor = PaperDistributor(n)(30)
     # distributor.formulate_model()
@@ -39,20 +40,20 @@ class PaperDistributor():
         else:
             # If there aren't a list of pairs, then we just select all of them
             self.pairs = pl.combination(self.students, 2)
-        self.choices = {} # This will contain our decision variables
+        self.choices = {}  # This will contain our decision variables
 
     def _formulate_model(self):
         print("Formulating model...")
 
-        valid_match = lambda m : m[0] != m[1][0] and m[0] != m[1][1]
+        valid_match = lambda m: m[0] != m[1][0] and m[0] != m[1][1]
         all_assignments = filter(valid_match, product(self.students, self.pairs))
 
-        # Contains all the valid assignments for a student 
-        student_assignments = defaultdict(list) 
+        # Contains all the valid assignments for a student
+        student_assignments = defaultdict(list)
 
         # Contains all the possible pairs for a grader that contain another student
-        # For example student_contains[(0, 3)] = [0_(1,3), 0_(2,3), 0_(3,4), 0_(3,5)] 
-        student_contains = defaultdict(list) 
+        # For example student_contains[(0, 3)] = [0_(1,3), 0_(2,3), 0_(3,4), 0_(3,5)]
+        student_contains = defaultdict(list)
 
         # Contains all the students a pair could be assigned to
         pair_contains = defaultdict(list)
@@ -70,7 +71,7 @@ class PaperDistributor():
 
             pair_contains[(p1, p2)].append(var)
 
-        for asins in pair_contains.values():    
+        for asins in pair_contains.values():
             # Each pair is only assigned once
             # self.prob += pl.lpSum(asins) >= 1
             self.prob += pl.lpSum(asins) == 1
@@ -82,7 +83,7 @@ class PaperDistributor():
             # must not differ by more than 1
             # For example [a:5, b:5, c:3] is invalid since 5 - 3 = 2
             # but [a:5, b:5, c:4] is valid
-                        
+
             sum1 = student_assignments[grader_1]
             sum2 = student_assignments[grader_2]
 
@@ -94,13 +95,13 @@ class PaperDistributor():
         c = pl.LpVariable("c", lowBound=0, cat="Integer")
         for asins in student_contains.values():
             # Every student marks an amount of another student's paper.
-            # For example for the assingment: 
+            # For example for the assingment:
             # a:[(b,c), (c, d)]
             # (a,b) = 1, (a,c) = 2 and (a,d) = 1 since a marks b's paper twice
             # So here were looping over all such combinations and setting c to be the maximum of these values
             self.prob += pl.lpSum(asins) <= c
 
-        #C is our objective function that we're trying to minimise
+        # C is our objective function that we're trying to minimise
         self.prob += c
         self.formulated = True
         print("Model formulated")
@@ -126,8 +127,8 @@ class PaperDistributor():
 
     def get_solution(self):
         if not self.solved:
-            self._solve()       
-            
+            self._solve()
+
         solution_dict = defaultdict(list)
         for c in self.choices:
             grader, (p1, p2) = c
@@ -138,14 +139,13 @@ class PaperDistributor():
         return solution_dict
 
 
-class IterativePaperDistributor():
-    
+class IterativePaperDistributor:
     def __init__(self, n, ranking, pairs, past_tourneys):
         self.students = range(n)
         self.ranking = ranking
         self.pairs = pairs
         self.past_tourneys = past_tourneys
-        
+
         self.choices = {}
         self.prob = pl.LpProblem("Paper_Distribution", pl.LpMinimize)
 
@@ -161,7 +161,6 @@ class IterativePaperDistributor():
         return cache
 
     def _formulate_model(self):
-
         def valid_match(m):
             grader, (p1, p2) = m
             diff = grader != p1 and grader != p2
@@ -169,14 +168,14 @@ class IterativePaperDistributor():
             unseen2 = (p2, p1) not in self.past_tourneys[grader]
 
             return diff and unseen1 and unseen2
-            
+
         all_assignments = filter(valid_match, product(self.students, self.pairs))
 
         # Contains all the students a pair could be assigned to
         pair_contains = defaultdict(list)
 
-        # Contains all the valid assignments for a student 
-        student_assignments = defaultdict(list) 
+        # Contains all the valid assignments for a student
+        student_assignments = defaultdict(list)
 
         for asin in all_assignments:
             grader, (p1, p2) = asin
@@ -187,7 +186,7 @@ class IterativePaperDistributor():
             student_assignments[grader].append(var)
             self.choices[asin] = var
 
-        for asins in pair_contains.values():    
+        for asins in pair_contains.values():
             # Each pair is only assigned once
             # self.prob += pl.lpSum(asins) >= 1
             self.prob += pl.lpSum(asins) == 1
@@ -199,7 +198,7 @@ class IterativePaperDistributor():
             # must not differ by more than 1
             # For example [a:5, b:5, c:3] is invalid since 5 - 3 = 2
             # but [a:5, b:5, c:4] is valid
-                        
+
             sum1 = student_assignments[grader_1]
             sum2 = student_assignments[grader_2]
 
@@ -209,7 +208,7 @@ class IterativePaperDistributor():
             self.prob += abs_var <= 1
 
         obj_arr = []
-        for asin in all_assignments: 
+        for asin in all_assignments:
             # Every student is given a score from their ranking
             # Every pair is given an uncertainty rating
 
@@ -233,7 +232,6 @@ class IterativePaperDistributor():
         self.solved = True
         print("Model solved")
 
-         
     def get_solution(self):
         """Obtains a tournament from the MIP model"""
         if not self.solved:
@@ -258,7 +256,6 @@ class IterativePaperDistributor():
             if active:
                 print(f"{grader}: ({p1}, {p2})")
 
-
     def calc_uncert(self, p1, p2):
         i1 = self.player_indexes[p1]
         i2 = self.player_indexes[p2]
@@ -266,9 +263,7 @@ class IterativePaperDistributor():
         n = len(self.students)
         return (n - abs(i1 - i2)) / n
 
-
     def calc_skill(self, student):
         idx = self.player_indexes[student]
         n = len(self.students)
-        return (n - idx)/n
-        
+        return (n - idx) / n

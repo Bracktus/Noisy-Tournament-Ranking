@@ -1,22 +1,23 @@
 from random import randint
 
+
 def random_connected_graph(n):
     """
-    Given n nodes. 
+    Given n nodes.
     return a set of n edges that make up a connected graph.
     """
     edges = set()
-    
+
     for a in range(n):
         b = randint(0, n - 1)
 
         # Rejection sampling
-        same = lambda a, b : a == b
-        repeat = lambda a, b: (a,b) in edges or (b,a) in edges
-        while same(a, b) or repeat(a,b):
+        same = lambda a, b: a == b
+        repeat = lambda a, b: (a, b) in edges or (b, a) in edges
+        while same(a, b) or repeat(a, b):
             b = randint(0, n - 1)
 
-        edges.add((a,b))
+        edges.add((a, b))
 
     return edges
 
@@ -33,10 +34,3 @@ def connected_graph(n, k):
         edges = edges.union(g)
 
     return list(edges)
-
-        
-
-            
-        
-
-    

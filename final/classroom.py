@@ -1,6 +1,7 @@
 from random import gauss
 
-class Classroom():
+
+class Classroom:
     def __init__(self, num_students, malicious=False):
         self.num_students = num_students
         self.grades = {s: self._gen_score() for s in range(self.num_students)}
@@ -15,7 +16,7 @@ class Classroom():
 
     def grader_skill(self, student):
         """
-        Takes in a student number and return the probability of them marking a matchup correctly 
+        Takes in a student number and return the probability of them marking a matchup correctly
         """
         score = self.get_student_score(student)
         if not self.malicious:
@@ -28,4 +29,5 @@ class Classroom():
     def get_student_score(self, student):
         return self.grades[student]
 
-         
+    def __len__(self):
+        return self.num_students

@@ -35,17 +35,19 @@ def get_neighbour(ranking, tourney, orig_score):
     return score, new_rnk
 
 
-def calculate_kemeny(inital_solution,
-                     tourney,
-                     initial_temperature,
-                     temperature_length,
-                     cooling_ratio,
-                     num_non_improve):
+def calculate_kemeny(
+    inital_solution,
+    tourney,
+    initial_temperature,
+    temperature_length,
+    cooling_ratio,
+    num_non_improve,
+):
     """
     Calculates an approximation of the best kemeny ranking using simulated annealing
     """
 
-    #Conversion to set for fast lookup
+    # Conversion to set for fast lookup
     tourney = set(tourney)
 
     # Set the inital and the best solutions
@@ -62,9 +64,7 @@ def calculate_kemeny(inital_solution,
         # Run inner loop for temperature_length iterations
         for _ in range(temperature_length):
             # Get a neighbour
-            new_score, new_sol = get_neighbour(curr_sol,
-                                               tourney,
-                                               curr_score)
+            new_score, new_sol = get_neighbour(curr_sol, tourney, curr_score)
             # Get delta_C
             score_diff = new_score - curr_score
 
@@ -88,11 +88,11 @@ def calculate_kemeny(inital_solution,
                 # Generate a number between 0 and 1
                 q = random.random()
                 # If it's greater than e^{-deltaC/T}
-                if q < math.exp(-score_diff/temperature):
+                if q < math.exp(-score_diff / temperature):
                     curr_sol = new_sol
                     curr_score = new_score
 
         # set T to f(T), where f(T) = a * T
         temperature *= cooling_ratio
 
-    return best_sol 
+    return best_sol
