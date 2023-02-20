@@ -11,7 +11,7 @@ class Classroom:
         """
         Generates a score test between 0 and 1 along a gaussian distribution. With mean 0.5 and stdev 0.3
         """
-        score = gauss(0.5, 0.2)
+        score = gauss(0.5, 0.3)
         return max(0, min(score, 1))
 
     def grader_skill(self, student):
@@ -31,3 +31,8 @@ class Classroom:
 
     def __len__(self):
         return self.num_students
+
+    def avg_grade(self):
+        n = self.num_students
+        total = sum(self.grades.values())
+        return total / n

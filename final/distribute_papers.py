@@ -24,12 +24,6 @@ Then they would be assigned (n*(n-1) / 2) - (n - 1) matchups.
 
 
 class PaperDistributor:
-    # ---Usage ---
-    # distributor = PaperDistributor(n)(30)
-    # distributor.formulate_model()
-    # distributor.solve(show_msg=True)
-    # distributor.print_solution()
-
     def __init__(self, n, pairs=None):
         self.prob = pl.LpProblem("Paper_Distribution", pl.LpMinimize)
         self.formulated = False
@@ -43,8 +37,6 @@ class PaperDistributor:
         self.choices = {}  # This will contain our decision variables
 
     def _formulate_model(self):
-        print("Formulating model...")
-
         valid_match = lambda m: m[0] != m[1][0] and m[0] != m[1][1]
         all_assignments = filter(valid_match, product(self.students, self.pairs))
 
@@ -104,16 +96,13 @@ class PaperDistributor:
         # C is our objective function that we're trying to minimise
         self.prob += c
         self.formulated = True
-        print("Model formulated")
 
     def _solve(self, show_msg=False):
         if not self.formulated:
             self._formulate_model()
 
-        print("Solving model...")
         self.prob.solve(pl.GUROBI_CMD(msg=show_msg))
         self.solved = True
-        print("Model solved")
 
     def print_solution(self):
         if not self.solved:
@@ -227,10 +216,8 @@ class IterativePaperDistributor:
         if not self.formulated:
             self._formulate_model()
 
-        print("Solving model...")
         self.prob.solve(pl.GUROBI_CMD(msg=show_msg))
         self.solved = True
-        print("Model solved")
 
     def get_solution(self):
         """Obtains a tournament from the MIP model"""
@@ -261,7 +248,7 @@ class IterativePaperDistributor:
         i2 = self.player_indexes[p2]
 
         n = len(self.students)
-        return (n - abs(i1 - i2)) / n
+        return abs(i1 - i2) / n
 
     def calc_skill(self, student):
         idx = self.player_indexes[student]

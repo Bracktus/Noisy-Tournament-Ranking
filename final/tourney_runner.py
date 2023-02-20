@@ -1,8 +1,5 @@
 import distribute_papers as dp
 from generate_tourney import TournamentGenerator
-from rankers import copeland, ranking_to_weights, kemeny, rbtl
-from random import shuffle
-from metrics import kendall_tau
 from graph_utils import connected_graph
 
 
@@ -45,7 +42,7 @@ def run_iterative_tourney(k, rounds, ranker, classroom):
     return real_ranking, ranking
 
 
-def run_tourney(n, classroom, k=None):
+def run_tourney(n, classroom, ranker, k=None):
     if k == None:
         distributor = dp.PaperDistributor(n)
     else:
@@ -55,41 +52,8 @@ def run_tourney(n, classroom, k=None):
     assignments = distributor.get_solution()
     tourney_generator = TournamentGenerator(classroom)
     tourney_generator.generate_tournament(assignments)
-    tourney_generator.print_tournament()
     tournament = tourney_generator.get_results()
 
     t1 = tourney_generator.get_true_ranking()
-    print(f"true: \n{t1}")
-
-    t2 = copeland(tournament)
-    print(f"copeland: \n{t2}")
-
-    weights = ranking_to_weights(t1)
-    t2w = copeland(tournament, weights=weights)
-    print(f"weighted copeland: \n{t2w}")
-
-    t3 = kemeny(tournament)
-    print(f"kemeny: \n{t3}")
-
-    t4 = rbtl(tournament)
-    print(f"rbtl: \n{t4}")
-
-    t5 = t1.copy()
-    shuffle(t5)
-    print(f"random: \n{t5}")
-
-    print(
-        f"The distance between the true ranking and the copeland ranking is: {kendall_tau(t1, t2)}"
-    )
-    print(
-        f"The distance between the true ranking and the weighted copeland ranking is: {kendall_tau(t1, t2w)}"
-    )
-    print(
-        f"The distance between the true ranking and the kemeny ranking is: {kendall_tau(t1, t3)}"
-    )
-    print(
-        f"The distance between the true ranking and the rbtl ranking is: {kendall_tau(t1, t4)}"
-    )
-    print(
-        f"The distance between the true ranking and a random ranking is: {kendall_tau(t1,t5)}"
-    )
+    t2 = ranker(tournament)
+    return t1, t2
