@@ -17,7 +17,8 @@ def random_connected_graph(n):
         while same(a, b) or repeat(a, b):
             b = randint(0, n - 1)
 
-        edges.add((a, b))
+        lt, gt = (a, b) if a < b else (b, a)
+        edges.add((lt, gt))
 
     return edges
 
