@@ -1,0 +1,22 @@
+graph {
+    a[label="0.72", color="red"]
+    b[label="0.32", color="blue"]
+    c[label="0.95", color="yellow"]
+    d[label="0.45", color="green"]
+
+    edge [len=3]
+    a -- b[color="yellow"]
+    a -- b[color="green"]
+    a -- c[color="blue"]
+    a -- c[color="green"]
+    a -- d[color="blue"]
+    a -- d[color="yellow"]
+    b -- c[color="red"]
+    b -- c[color="green"]
+    b -- d[color="red"]
+    b -- d[color="yellow"]
+    c -- d[color="red"]
+    c -- d[color="blue"]
+}
+
+

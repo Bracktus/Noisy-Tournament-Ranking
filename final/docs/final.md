@@ -19,7 +19,7 @@ $(v_{a}, v_{b}) \in E$ means that student $v_{a}$'s paper is paired against play
 
 $$E \subset V \times V \text{ where } \forall (v_{a}, v_{b}) \in E, v_{a} \neq v_{b}$$ 
 
-Let $A$ be a set of assignments.
+Let $A$ the set of assignments.
 
 $(v_{i},v_{j},v_{k}) \in A$ means that student $v_{i}$ marks the matchup $(v_{j}, v_{k}) \in E.$
 
@@ -33,9 +33,19 @@ We can define a relation $\preceq_{t}$ over $V$.
 
 $$\forall v, v' \in V, \quad v \preceq_{t} v' \text{ iff } t(v) \leq t(v')$$
 
+From $A$ and $t$ we can obtain $A'$. 
+
+$A'$ is similar to $A$ but the ordering of the pairs matter. 
+
+For example the triplet $(v_{i}, v_{j}, v_{k})$ means that the student determined that $v_{j}$'s paper was better than $v_{k}$'s paper, wheras the triplet $(v_{i}, v_{k}, v_{j})$ means that the student determined that $v_{k}$'s paper was better than $v_{j}$'s paper.
+
+The correct assessment would be $(v_{i}, v_{j}, v_{k}) \text{ iff } t(v_{j}) \geq t(v_{k})$
+
+The probability that $v_{i}$ will make the correct assessment is a function of $t$.
+
 ## Our problem is as follows:
 
-Given $V, E, A$ find a relation $\preceq_{t'}$ such that the preorder defined by $\preceq_{t'}$ is 'close to' the preorder defined by $\preceq_{t}$.
+Given $V, E, A, A'$ find a relation $\preceq_{t'}$ such that the preorder defined by $\preceq_{t'}$ is 'close to' the preorder defined by $\preceq_{t}$.
 
 ## For example let's take 4 students
 
@@ -61,6 +71,8 @@ $$
 $$
 
 $$ b \preceq_{t} d \preceq_{t} a \preceq_{t} c $$
+
+![Visualisation of $A$. The edge colours denote which player marks the matchup.](./figures/fig1.svg){width=80mm}
 
 ## Closeness?
 
@@ -89,7 +101,13 @@ Therefore, the normalised Kendall tau distance $K_{n}$ is
 
 $$K_{n} = \frac{K_{d}}{\frac{n(n-1)}{2}} = \frac{2K_{d}}{n(n - 1)}$$
 
-# How do we obtain $A$?
+# Obtaining $A$ and $A'$
+
+## The size of $A$
+
+In the example given we've 
+
+## Additional restrictions on $A$
 
 Assuming we're in charge of the matchup assignments. Then there are certain properties that we would like to satisfy.
 
@@ -130,7 +148,7 @@ For each assignment $(i,j,k) \in A$, we define a decision variable $X_{i,j,k} \i
 
 If $X_{i,j,k} = 1$ then the matchup $(j,k) \in E$ is assigned to player $i$.
 
-If $X_{i,k,k} = 0$ then the matchup $(j,k) \in E$ is not assigned to player $i$.
+If $X_{i,j,k} = 0$ then the matchup $(j,k) \in E$ is not assigned to player $i$.
 
 ### Constraints
 
@@ -140,19 +158,19 @@ $$f(v) = \sum_{(j, k) \in E} X_{v, j, k}$$
 
 To satisfy condition 3 we can add the following constraint. For every pair of students, the number of matchups assigned to them cannot differ by more than 1[^1]. 
 
-[^1]: You may wonder why we don't make it equal to 1. This is because for many graphs it'll be infeasible. For example take the graph $K_{4}$. $K_{4}$ has $6$ edges and $4$ nodes. It's impossible to create an assignment for $K_{4}$ where each node has the same number of matchups to mark.
+[^1]: We don't set it equal to 0. This is because for many graphs it'll be infeasible. In fact for any graph where $|V| \mod |E| \neq 0$ it's infeasible.
 
 $$\forall (a, b) \in V \times V, a \neq b, \quad |f(a) - f(b)| \leq 1$$
 
-This next constraint ensures that every matchup in $E$ gets assigned to at least one player.
+This next constraint ensures that every matchup in $E$ gets assigned. It also ensures that each matchup is marked only once. We could relax this constraint and change it to $\geq 1$ instead. This would mean that each matchup could be marked more than once.
 
-$$\forall (j,k) \in E, \quad \sum_{v \in V} X_{v,j,k} \geq 1$$
+$$\forall (j,k) \in E, \quad \sum_{v \in V} X_{v,j,k} = 1$$
 
 ### Objective function
 
 Let's define a function $s(a, b)$. This takes in 2 students $a$ and $b$, and returns the number of times a matchup containing $b$ is assigned to $a$. For example if $A = \{(a, b, c), (a, b, d), (a, f, b), (a, j, k)\}$, then $s(a, b) = 3$
 
-$$s(a,b) = \sum_{v \in V} X_{a,b,v} + X_{a, v, b}$$
+$$s(a,b) = \sum_{v \in V} X_{a, b,v} + X_{a, v, b}$$
 
 We can now define out objective function. This corresponds to condition 2. Which avoids concentrating all of player $b$'s matches in the hands of player $a$.
 
@@ -160,7 +178,7 @@ $$\text{minimise }  max(\{s(a,b) | (a, b) \in V \times V, a \neq b\})$$
 
 ## $abs$ and $max$ in a linear program?
 
-$abs$ and $max$ aren't linear functions. So they can't be used in a linear programming model. However, there are tricks we can employ with slack variable to implement these.
+$abs$ and $max$ aren't linear functions so they can't be used in a linear programming model. However, there are tricks we can employ with slack variable to implement these.
 
 Let's say we have 2 decision variables $X_{1}$ and $X_{2}$. In order to find $max(X_{1}, X_{2})$ we'll create a slack variable $M$.
 
@@ -179,6 +197,16 @@ $$A \geq X_{1} - X_{2}$$
 $$A \geq X_{2} - X_{1}$$
 
 $A$ will be larger than (or equal to) $abs(X_{1}, X_{2})$ We can now apply the same trick as $max$. In our specific case we don't need to do that since we have the constraint $A \leq 1$.
+
+## Example:
+
+![Edge list](./figures/fig2_no_col.svg){width=50%} 
+![Assignments](./figures/fig2_col.svg){width=50%}
+\begin{figure}[!h]
+\caption{Before and after running the MIP model with 7 students}
+\end{figure}
+
+## Obtaining $A'$
 
 # Ranking methods
 
