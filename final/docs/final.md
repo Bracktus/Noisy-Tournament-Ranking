@@ -5,6 +5,8 @@ author:
     - "Supervisor: Richard Booth"
 geometry:
     - margin=30mm
+header-includes:
+  - \usepackage[ruled,vlined,linesnumbered]{algorithm2e}
 ---
 
 # Mathematical formulation of the problem:
@@ -25,7 +27,7 @@ $(v_{i},v_{j},v_{k}) \in A$ means that student $v_{i}$ marks the matchup $(v_{j}
 
 $$A \subset E \times V \text{ where } \forall (v_{i},v_{j},v_{k}) \in A, v_{j} \neq v_{i} \neq v_{k}$$
 
-Each student $v \in V$ has a score $t(v)$.
+Each student $v \in V$ has a score $t(v)$ that reprsents their score on the test.
 
 $$t: V \rightarrow [0, 1]$$
 
@@ -33,15 +35,13 @@ We can define a relation $\preceq_{t}$ over $V$.
 
 $$\forall v, v' \in V, \quad v \preceq_{t} v' \text{ iff } t(v) \leq t(v')$$
 
-From $A$ and $t$ we can obtain $A'$. 
+From $A$ and $t$ we can obtain $A'$ by giving our assignments to the students.
 
-$A'$ is similar to $A$ but the ordering of the pairs matter. 
+$A'$ is similar to $A$ but the ordering of the pairs matter. In other words it turns the graph $A$ into a digraph $A'$. 
 
 For example the triplet $(v_{i}, v_{j}, v_{k})$ means that the student determined that $v_{j}$'s paper was better than $v_{k}$'s paper, wheras the triplet $(v_{i}, v_{k}, v_{j})$ means that the student determined that $v_{k}$'s paper was better than $v_{j}$'s paper.
 
 The correct assessment would be $(v_{i}, v_{j}, v_{k}) \text{ iff } t(v_{j}) \geq t(v_{k})$
-
-The probability that $v_{i}$ will make the correct assessment is a function of $t$.
 
 ## Our problem is as follows:
 
@@ -72,7 +72,7 @@ $$
 
 $$ b \preceq_{t} d \preceq_{t} a \preceq_{t} c $$
 
-![Visualisation of $A$. The edge colours denote which player marks the matchup.](./figures/fig1.svg){width=80mm}
+![Visualisation of $A$. The colours denote the players.](./figures/fig1.svg){width=80mm}
 
 ## Closeness?
 
@@ -101,29 +101,34 @@ Therefore, the normalised Kendall tau distance $K_{n}$ is
 
 $$K_{n} = \frac{K_{d}}{\frac{n(n-1)}{2}} = \frac{2K_{d}}{n(n - 1)}$$
 
-# Obtaining $A$ and $A'$
+# Choosing $A$ and $A'$
 
-## The size of $A$
+## TODO: The size of $A$
 
-In the example given we've 
+In the example given we've...
+
+Talk about workload, growth rate of giving out all pairs, what about with repeats etc...
+
+Maybe could move this section over into experimental bit. Coz we could talk about accuracy as we change the size of A
 
 ## Additional restrictions on $A$
 
-Assuming we're in charge of the matchup assignments. Then there are certain properties that we would like to satisfy.
+If we're in charge of the matchup assignments then there are certain properties that we would like to satisfy. 
 
 1. Each student does not mark their own paper.
 2. Avoid giving a grader too many of a single student's matchups.
 3. Keep the workload of each student fairly even.
+4. We obtain a baseline amount of 'information' about each player.
 
-Condition 1\. 
+### Condition 1\. 
 
 This is already handled by the definition of $A$.
 
-Condition 2\. 
+### Condition 2\. 
 
 Let's say player 2 is assigned the matchups: (1,3), (3, 5), (3, 4) and (6, 3). In this case a lot of player 3's matches are concentrated in player 2's hands. If player 2 is a poor student then we will not have much useful information to infer player 3's skill.
 
-Condition 3\. 
+### Condition 3\. 
 
 If player 1 is assigned the matchups: 
 
@@ -137,6 +142,12 @@ and player 2 is assigned the matchups
 - (5,1)
 
 Then player 2 is marking a lot more matchups that player 1. Which would be an unfair workload.
+
+### Condition 4\. 
+
+If we assume information on a student $v$ to be a measure of how many good graders have marked their matchup it becomes difficult to satisfy this. After all, how can we identify the good graders before we've ranked the students. 
+
+If we take the grading skill out of the equation, then we can measure this by the number of times student $v$ appears in $E$. Taking this, we can satisfy this condition by constructing $E$ such that each student appears in $E$ a roughly equal amount of times.
 
 To solve this problem of matchup assignments we can turn to a Mixed Integer Linear Programming model.
 
@@ -176,7 +187,7 @@ We can now define out objective function. This corresponds to condition 2. Which
 
 $$\text{minimise }  max(\{s(a,b) | (a, b) \in V \times V, a \neq b\})$$
 
-## $abs$ and $max$ in a linear program?
+### $abs$ and $max$ in a linear program?
 
 $abs$ and $max$ aren't linear functions so they can't be used in a linear programming model. However, there are tricks we can employ with slack variable to implement these.
 
@@ -198,7 +209,7 @@ $$A \geq X_{2} - X_{1}$$
 
 $A$ will be larger than (or equal to) $abs(X_{1}, X_{2})$ We can now apply the same trick as $max$. In our specific case we don't need to do that since we have the constraint $A \leq 1$.
 
-## Example:
+### Example:
 
 ![Edge list](./figures/fig2_no_col.svg){width=50%} 
 ![Assignments](./figures/fig2_col.svg){width=50%}
@@ -206,13 +217,46 @@ $A$ will be larger than (or equal to) $abs(X_{1}, X_{2})$ We can now apply the s
 \caption{Before and after running the MIP model with 7 students}
 \end{figure}
 
-## Obtaining $A'$
+Now we can give these assignments to our students and obtain $A'$.
 
-# Ranking methods
+# TODO: Ranking methods
 
-Now that we've obtained a set of assignments 
+Now that we've obtained a set of assignments we can now get to work on defining our ranking relation $\preceq_{t'}$.
 
-## Something to think about
+I've implemented 5 different methods of ranking:
+
+- Copeland's Rule BORDA
+- Weighted Copeland's Rule BORDA
+- Kemeny Score
+- Bradley-Terry-Luce (BTL) IDEA!
+- Refereed Bradley-Terry-Luce (RBTL)
+
+## Copeland's Rule NOPE ACTUALLY BORDA
+
+Copeland's rule is usually defined over a ranked voting situation. This is where there a set of candidates and a set of voters. Each voter is asked to provide a ordered preference list on the candidates where ties are allowed.
+
+We then create a results matrix $r$, where:
+
+<!-- https://en.wikipedia.org/wiki/Copeland%27s_method -->
+<!--CITE -->
+$$
+r_{ij} = \begin{cases}
+    1 & \text{if more voter strictly prefer candidate $i$ to $j$ than $j$ to $i$} \\ 
+    0 & \text{if the numbers are equal} \\
+    -1 & \text{otherwise}
+\end{cases}
+$$
+
+Let the set of candidates be $C$
+
+The copeland score for candidate $i$ is $\sum_{j \in C \setminus \{i\}} r_{i,j}$.
+
+Our situation is a little different but we can apply the same idea.
+
+
+
+
+# TODO: Synthetic data generation of $A'$/Something to think about
 
 In our first model of students grading, we assumed that marking skill was a function of player skill.
 Specifically grading\_skill = 0.5 * player\_skill + 0.5
