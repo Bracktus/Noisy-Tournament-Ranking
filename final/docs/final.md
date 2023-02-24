@@ -80,10 +80,10 @@ In order to measure closeness between 2 preorders we need some sort of distance 
 
 For example let's take the relations $\preceq_{t}$ and $\preceq_{t'}$ over $V = \{a, b, c\}$
 
-$$ b \preceq_{t} d \preceq_{t} a \preceq_{t} c $$
+$$ c \preceq_{t} a \preceq_{t} d \preceq_{t} b $$
 $$\preceq_{t} = \{(b,d),(b,a),(b,c),(d,a),(d,c),(a,c),(a,a),(b,b),(c,c),(d,d)\}$$
 
-$$ c \preceq_{t'} b \preceq_{t'} a \preceq_{t'} d $$
+$$ d \preceq_{t'} a \preceq_{t'} b \preceq_{t'} c $$
 $$\preceq_{t'} = \{(c,b),(c,a),(c,d),(b,a),(b,d),(a,d),(a,a),(b,b),(c,c),(d,d)\}$$
 
 The set of differing pairs is
@@ -183,7 +183,7 @@ Let's define a function $s(a, b)$. This takes in 2 students $a$ and $b$, and ret
 
 $$s(a,b) = \sum_{v \in V} X_{a, b,v} + X_{a, v, b}$$
 
-We can now define out objective function. This corresponds to condition 2. Which avoids concentrating all of player $b$'s matches in the hands of player $a$.
+We can now define our objective function. This corresponds to condition 2. Which avoids concentrating all of player $b$'s matches in the hands of player $a$.
 
 $$\text{minimise }  max(\{s(a,b) | (a, b) \in V \times V, a \neq b\})$$
 
@@ -225,36 +225,51 @@ Now that we've obtained a set of assignments we can now get to work on defining 
 
 I've implemented 5 different methods of ranking:
 
-- Copeland's Rule BORDA
-- Weighted Copeland's Rule BORDA
+- Borda Count 
+- Weighted Borda Count
 - Kemeny Score
 - Bradley-Terry-Luce (BTL) IDEA!
 - Refereed Bradley-Terry-Luce (RBTL)
 
-## Copeland's Rule NOPE ACTUALLY BORDA
+## Borda Count
 
-Copeland's rule is usually defined over a ranked voting situation. This is where there a set of candidates and a set of voters. Each voter is asked to provide a ordered preference list on the candidates where ties are allowed.
+With Borda count we're given a set of candidates and a set of ballots. Each ballot contains a linear ordering of the candidates. If a ballot $j$ ranks candidate $a$ over candidate $b$, then we can write $a \succ_{j} b$.
 
-We then create a results matrix $r$, where:
+The net preference for $a$ over $b$ is defined as:
 
-<!-- https://en.wikipedia.org/wiki/Copeland%27s_method -->
-<!--CITE -->
+$$Net(a > b) = |\{j \in N | a \succ_{j} b\}| - \{j \in N | b \succ_{j} a\}|$$
+
+Where $N$ is the set of ballots.
+
+In other words, it's the total number of people that prefer $a$ over $b$, minus the total number of people that prefer $b$ to $a$. 
+
+Next, each candidate is given a Borda score. This is calculated as:
+
+$$Borda(x) = \sum_{y \in A} Net(x > y)$$
+
+Where $A$ is the set of candidates.
+
+In other words, it's the total net preference of $x$ over every other candidate $y$.
+
+In our problem we aren't given a set of ballots. Instead we have a list of matchups forming a tournament. We can view a pair $(i, j, k) \in A'$ as a $i$'s ballot preferring candidate $j$ to candidate $k$.
+
+Then we can enumerate over every student's matchup to find $Net(a > b)$ and therefore $Borda(x)$.
+
 $$
-r_{ij} = \begin{cases}
-    1 & \text{if more voter strictly prefer candidate $i$ to $j$ than $j$ to $i$} \\ 
-    0 & \text{if the numbers are equal} \\
-    -1 & \text{otherwise}
+j \succ_{A'_{i}} k = \begin{cases}
+    1 & \text{ if } (i, j, k) \in A' \\
+    -1 & \text{ if } (i, k, j) \in A' \\
+    0 & \text{ otherwise}
 \end{cases}
 $$
 
-Let the set of candidates be $C$
+$$Net(j > k) = \sum_{i \in V} j \succ_{A'_{i}} k $$
 
-The copeland score for candidate $i$ is $\sum_{j \in C \setminus \{i\}} r_{i,j}$.
+$$Borda(j) = \sum_{k \in V} Net(j > k)$$
 
-Our situation is a little different but we can apply the same idea.
+In other words, if we take $A'$ to be a directed graph where if $(i, j, k) \in A'$, there's an edge $(j, k)$. 
 
-
-
+Then for each node $a$ in $A'$, we $Borda(a) = indegree(a) - outdegree(a)$
 
 # TODO: Synthetic data generation of $A'$/Something to think about
 
