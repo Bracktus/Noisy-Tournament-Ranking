@@ -281,6 +281,21 @@ $$w_{v} = \frac{n - idx(v)}{k}$$
 
 How to express idx as maths?
 
+## Kemeny Score
+
+Like the Borda score, the Kemeny score is defined over a set of candidates and a set of ballots.
+
+We first enumerate over the ballots to create a matrix $B$ that counts voter pairwise preferences. For example, entry $B_{i,j}$ would contain the total number of ballots that prefer candidate $i$ to candidate $j$.
+
+Next we test all possible rankings and calculate a score for each ranking. This ranking is calculated as follows:
+
+$$Kemeny(\preceq_{t'}, B) = \sum_{(i, j) \in \preceq_{t'}} B_{i,j} - B_{j,i}$$
+
+One way to think about it is that it's calculating the Kendall tau distance between a ranking $\preceq_{t'}$ and the aggregated ballots. Next we have to enumerate through all possible rankings to find the ranking that minimises the Kemeny score. That ranking will be the Kemeny ranking.
+
+In our case we don't have ballots, but we do have the pairwise comparisons needed to create the matrix. We can enumerate over all the matchups in $A'$ to make a matrix $B$ where $B_{j,k} = Net(j > k)$. Where $Net(j > k)$ is the same operation we defined for the Borda count.
+
+
 # TODO: Synthetic data generation of $A'$/Something to think about
 
 In our first model of students grading, we assumed that marking skill was a function of player skill.
