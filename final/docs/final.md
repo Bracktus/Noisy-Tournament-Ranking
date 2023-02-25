@@ -253,7 +253,7 @@ In other words, it's the total net preference of $x$ over every other candidate 
 
 In our problem we aren't given a set of ballots. Instead we have a list of matchups forming a tournament. We can view a pair $(i, j, k) \in A'$ as a $i$'s ballot preferring candidate $j$ to candidate $k$.
 
-Then we can enumerate over every student's matchup to find $Net(a > b)$ and therefore $Borda(x)$.
+Then we can enumerate over every student's matchup to find $Net(a > b)$.
 
 $$
 j \succ_{A'_{i}} k = \begin{cases}
@@ -269,7 +269,17 @@ $$Borda(j) = \sum_{k \in V} Net(j > k)$$
 
 In other words, if we take $A'$ to be a directed graph where if $(i, j, k) \in A'$, there's an edge $(j, k)$. 
 
-Then for each node $a$ in $A'$, we $Borda(a) = indegree(a) - outdegree(a)$
+Then for each node $a$ in $A'$, we $Borda(a) = indegree(a) - outdegree(a)$. Finally we can use $Borda(a)$ as our ranking function $t'$ to obtain a preorder $\preceq_{t'}$ over $V$.
+
+## Weighted Borda Count:TODO
+
+Given a preorder $\preceq_{t'}$ over $V$ we can define an accuracy weighting $w$ for each student $v \in V$.
+
+$$n = |V|$$
+$$k = \frac{n(n + 1)}{2}$$
+$$w_{v} = \frac{n - idx(v)}{k}$$
+
+How to express idx as maths?
 
 # TODO: Synthetic data generation of $A'$/Something to think about
 
