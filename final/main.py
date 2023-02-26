@@ -5,10 +5,17 @@ from classroom import Classroom
 
 
 def main():
-    n = 22
-    papers = 5
+    n = 15
+    papers = 8
+
     classroom = Classroom(n, malicious=False)
-    real, mine1 = run_iterative_tourney(2, 5, rbtl, classroom)
+    real, mine1 = run_iterative_tourney(
+        k=1,
+        rounds=papers,
+        ranker=rbtl,
+        classroom=classroom
+    )
+    print(f"running tourney with {n} students and {papers - 1} matchups to mark each")
     print(f"real: {real}")
     print(f"iterative: {mine1}")
 

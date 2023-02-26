@@ -53,6 +53,7 @@ def run_tourney(n, classroom, ranker, k=None):
     tourney_generator = TournamentGenerator(classroom)
     tourney_generator.generate_tournament(assignments)
     tournament = tourney_generator.get_results()
+    tourney_generator.print_tournament()
 
     t1 = tourney_generator.get_true_ranking()
     t2 = ranker(tournament)
