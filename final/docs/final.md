@@ -7,6 +7,7 @@ geometry:
     - margin=30mm
 header-includes:
   - \usepackage[ruled,vlined,linesnumbered]{algorithm2e}
+  - \newcommand{\argmax}{\mathop{\mathrm{argmax}}\limits}
 ---
 
 # Mathematical formulation of the problem:
@@ -267,9 +268,11 @@ $$Net(j > k) = \sum_{i \in V} j \succ_{A'_{i}} k $$
 
 $$Borda(j) = \sum_{k \in V} Net(j > k)$$
 
-In other words, if we take $A'$ to be a directed graph where if $(i, j, k) \in A'$, there's an edge $(j, k)$. 
+In other words, if we take $A'$ to be a directed graph where if $(i, j, k) \in A'$, there's an edge $(j, k)$. Then for each node $a$ in $A'$, we $Borda(a) = indegree(a) - outdegree(a)$. 
 
-Then for each node $a$ in $A'$, we $Borda(a) = indegree(a) - outdegree(a)$. Finally we can use $Borda(a)$ as our ranking function $t'$ to obtain a preorder $\preceq_{t'}$ over $V$.
+Finally we can use $Borda(a)$ as our ranking function $t'$ to obtain a preorder $\preceq_{t'}$ over $V$.
+
+$$a \preceq_{t'} b \text{ iff } Borda(a) \leq Borda(b)$$
 
 ## Weighted Borda Count:TODO
 
@@ -291,10 +294,40 @@ Next we test all possible rankings and calculate a score for each ranking. This 
 
 $$Kemeny(\preceq_{t'}, B) = \sum_{(i, j) \in \preceq_{t'}} B_{i,j} - B_{j,i}$$
 
-One way to think about it is that it's calculating the Kendall tau distance between a ranking $\preceq_{t'}$ and the aggregated ballots. Next we have to enumerate through all possible rankings to find the ranking that minimises the Kemeny score. That ranking will be the Kemeny ranking.
+One way to think about it is that it's calculating the Kendall tau distance between a ranking $\preceq_{t'}$ and the aggregated ballots. 
 
-In our case we don't have ballots, but we do have the pairwise comparisons needed to create the matrix. We can enumerate over all the matchups in $A'$ to make a matrix $B$ where $B_{j,k} = Net(j > k)$. Where $Net(j > k)$ is the same operation we defined for the Borda count.
+In our case we don't have ballots, but we do have the pairwise comparisons needed to create the matrix. We reuse the $Net$ operation we defined for the Borda count to perform the same operation.
 
+$$Kemeny(\preceq_{t'}, B) = \sum_{(i, j) \in \preceq_{t'}} Net(i > j) - Net(j > i)$$
+
+Next we have to enumerate through all possible rankings to find the ranking that minimises the Kemeny score. That ranking will be the Kemeny ranking. However, now we have a problem there are $n!$ possible rankings (where $n$ is the length of the ranking). As $n$ grows larger this will be computationally intractable.
+
+Instead of doing an exhaustive search we can use local search with a metaheuristic to find an approximate solution. In my case I used simulated annealing which we'll talk about later.
+
+Either way, once compute the Kemeny ranking we can use it as a total order over $V$ and use it as our ranking $\preceq_{t'}$.
+
+## Bradley-Terry-Luce (BTL)
+
+Under the Bradley-Terry-Luce (BTL) model, the probability of a student $a$ beating student $b$ is as follows:
+
+$$P(a > b) = \frac{1}{1 + e^{-(w_{a} - w_{b})}}$$
+
+Where $w_{a}$ and $w_{b}$ are the skill levels of $a$ and $b$.
+
+If we assume that all matches are independent, then given a set of matches $A'$ we can multiply them together to get the probability of the tournament happening. This will also be our likelihood function $\mathcal{L}(\theta)$. Where $\theta = (w_{a}, w_{b}, \dots)$. $\Theta$ is the parameter space which contains all possible values for $\theta$.
+
+$$\mathcal{L}(\theta) = \prod_{(i, j, k) \in A'} \frac{1}{1 + e^{-(w_{j} - w_{k})}}$$
+
+Our next step will involve finding the values of $\theta$ that maximuse $\mathcal{L}(\theta)$. This will return a list of skill values $(w_{a}, w_{b}, \dots)$ that we can use as our ranking function $t'$.
+
+In practice we can actually take the log of the likelihood function to make it easier to maximise.
+
+$$\mathcal{L}(\theta) = \sum_{(i,j,k) \in A'} -ln(1 + e^{-(w_{i} - w_{j})})$$
+
+So to put it all together:
+
+$$\hat{\theta} = \argmax_{\theta \in \Theta} \mathcal{L}(\theta)$$
+$$a \preceq_{t'} b \text{ iff } w_{a}^{\hat{\theta}} \leq w_{b}^{\hat{\theta}}$$
 
 # TODO: Synthetic data generation of $A'$/Something to think about
 
