@@ -329,6 +329,24 @@ So to put it all together:
 $$\hat{\theta} = \argmax_{\theta \in \Theta} \mathcal{L}(\theta)$$
 $$a \preceq_{t'} b \text{ iff } w_{a}^{\hat{\theta}} \leq w_{b}^{\hat{\theta}}$$
 
+Note that method and all of the previous methods (barring weighted borda) doesn't take into account who's grading the matchups. We'll rectify that in the next ranking method.
+
+## Refereed Bradley-Terry-Luce (RBTL)
+
+The RBTL model is very similar to the BTL model with one small difference. Instead of taking pairwise matchups, we also take into the account the grader. So the probability of student $j$ beating student $k$ with student $i$ grading the matchup is:
+
+$$P(i : j > k) = \frac{1}{1+e^{-g_{i}(w_{j} - w_{k})}} \text{ where } g_{i} = aw_{i} + b$$
+
+Where $a$ and $b$ are parameters that determine the relationship between student skill and grading skill.
+
+We can now apply the same steps as the BTL model to obtain a ranking $\preceq_{t'}$.
+
+$$\mathcal{L}(\theta, a, b) = \sum_{(i,j,k) \in A'} -ln(1 + e^{(aw_{i} + b)(w_{j} - w_{k})})$$
+$$\hat{\theta} = \argmax_{\theta \in \Theta, a,b \in \mathbb{R}} \mathcal{L}(\theta)$$
+$$a \preceq_{t'} b \text{ iff } w_{a}^{\hat{\theta}} \leq w_{b}^{\hat{\theta}}$$
+
+
+
 # TODO: Synthetic data generation of $A'$/Something to think about
 
 In our first model of students grading, we assumed that marking skill was a function of player skill.
