@@ -45,9 +45,4 @@ class TournamentGenerator:
     def get_results(self):
         return self.tournament_results
 
-    def get_true_ranking(self):
-        grades = self.classroom.grades
-        true_ranking = grades.items()
-        true_ranking = sorted(true_ranking, key=lambda i: i[1], reverse=True)
-        true_ranking = [student for (student, _) in true_ranking]
-        return true_ranking
+    

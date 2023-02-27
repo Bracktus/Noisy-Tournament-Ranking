@@ -77,7 +77,7 @@ $$ b \preceq_{t} d \preceq_{t} a \preceq_{t} c $$
 
 ## Closeness?
 
-In order to measure closeness between 2 preorders we need some sort of distance metric. One common metric is the Kendall tau distance. This measures the number of differing pairs in the 2 preorders.
+In order to measure closeness between 2 preorders we'll need a distance metric. One common metric is the Kendall tau distance. This measures the number of differing pairs in the 2 preorders.
 
 For example let's take the relations $\preceq_{t}$ and $\preceq_{t'}$ over $V = \{a, b, c\}$
 
@@ -142,7 +142,7 @@ and player 2 is assigned the matchups
 - (5,3)
 - (5,1)
 
-Then player 2 is marking a lot more matchups that player 1. Which would be an unfair workload.
+Then player 2 is marking a lot more matchups that player 1 which is an unfair workload.
 
 ### Condition 4\. 
 
@@ -184,7 +184,7 @@ Let's define a function $s(a, b)$. This takes in 2 students $a$ and $b$, and ret
 
 $$s(a,b) = \sum_{v \in V} X_{a, b,v} + X_{a, v, b}$$
 
-We can now define our objective function. This corresponds to condition 2. Which avoids concentrating all of player $b$'s matches in the hands of player $a$.
+We can now define our objective function. This corresponds to condition 2 which avoids concentrating all of player $b$'s matches in the hands of player $a$.
 
 $$\text{minimise }  max(\{s(a,b) | (a, b) \in V \times V, a \neq b\})$$
 
@@ -268,7 +268,7 @@ $$Net(j > k) = \sum_{i \in V} j \succ_{A'_{i}} k $$
 
 $$Borda(j) = \sum_{k \in V} Net(j > k)$$
 
-In other words, if we take $A'$ to be a directed graph where if $(i, j, k) \in A'$, there's an edge $(j, k)$. Then for each node $a$ in $A'$, we $Borda(a) = indegree(a) - outdegree(a)$. 
+In other words, if we take $A'$ to be a directed graph where if $(i, j, k) \in A'$, there's an edge $(j, k)$ and the set of nodes is $V$. Then for each node $a$ in $A'$, we $Borda(a) = indegree(a) - outdegree(a)$. 
 
 Finally we can use $Borda(a)$ as our ranking function $t'$ to obtain a preorder $\preceq_{t'}$ over $V$.
 
@@ -345,8 +345,6 @@ $$\mathcal{L}(\theta, a, b) = \sum_{(i,j,k) \in A'} -ln(1 + e^{(aw_{i} + b)(w_{j
 $$\hat{\theta} = \argmax_{\theta \in \Theta, a,b \in \mathbb{R}} \mathcal{L}(\theta)$$
 $$a \preceq_{t'} b \text{ iff } w_{a}^{\hat{\theta}} \leq w_{b}^{\hat{\theta}}$$
 
-
-
 # TODO: Synthetic data generation of $A'$/Something to think about
 
 In our first model of students grading, we assumed that marking skill was a function of player skill.
@@ -362,6 +360,8 @@ Also would a student who got 0% on a maths exam be 100% confident on their paper
 Maybe we could have some sort of in-between? I.e. mapping [0 - 1] to [0.2 - 1]?
 
 Given (A, B, C). Could the probability depend on the difference between B's and C's score?
+
+Actually, we already have a probablility function P(C: A > B). that we define in the paper! Is it cheating if we use it though? It feels like we're giving an unfair advantage to RBTL in that case since the model exactly fits the dataset.
 
 ## Ideas for turning it into a website?
 

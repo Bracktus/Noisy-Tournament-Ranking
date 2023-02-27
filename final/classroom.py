@@ -20,7 +20,7 @@ class Classroom:
         """
         score = self.get_student_score(student)
         if not self.malicious:
-            prob = score * 0.5 + 0.5
+            prob = score * 0.8 + 0.2
         else:
             prob = score
 
@@ -36,3 +36,10 @@ class Classroom:
         n = self.num_students
         total = sum(self.grades.values())
         return total / n
+
+    def get_true_ranking(self):
+        grades = self.grades
+        true_ranking = grades.items()
+        true_ranking = sorted(true_ranking, key=lambda i: i[1], reverse=True)
+        true_ranking = [student for (student, _) in true_ranking]
+        return true_ranking

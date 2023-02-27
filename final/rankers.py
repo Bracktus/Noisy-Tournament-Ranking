@@ -1,6 +1,6 @@
 from collections import defaultdict
 from simulated_annealing import calculate_kemeny
-from mle import rbtl_mle
+from mle import rbtl_mle, btl_mle
 
 
 def ranking_to_weights(ranking):
@@ -60,6 +60,17 @@ def rbtl(tournament):
     through maximum likelihood estimation.
     """
     ranking = rbtl_mle(tournament)
+    ranking = enumerate(ranking)
+    ranking = sorted(ranking, key=lambda i: i[1], reverse=True)
+    ranking = [student for (student, _) in ranking]
+    return ranking
+
+def btl(tournament):
+    """
+    Finds the refereed bradley-terry model ranking of a tournament
+    through maximum likelihood estimation.
+    """
+    ranking = btl_mle(tournament)
     ranking = enumerate(ranking)
     ranking = sorted(ranking, key=lambda i: i[1], reverse=True)
     ranking = [student for (student, _) in ranking]
