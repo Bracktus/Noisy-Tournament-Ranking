@@ -201,6 +201,12 @@ $$M \geq X_{2}$$
 
 $M$ will now be larger than (or equal to) $max(X_{1}, X_{2})$. However, if we minimise over $M$, then $M$ will be restricted to be equal to the value of $max(X_{1}, X_{2})$. 
 
+In our case, the objective function becomes:
+
+$$S = \{s(a, b) | (a, b) \in V \times V, a \neq b\}$$
+$$\forall_{x \in S} \quad M \geq x$$
+$$\text{minimise } M$$
+
 To find $abs(X_{1}, X_{2})$ we'll create another slack variable $A$.
 
 We can then add the constraints:
@@ -209,6 +215,15 @@ $$A \geq X_{1} - X_{2}$$
 $$A \geq X_{2} - X_{1}$$
 
 $A$ will be larger than (or equal to) $abs(X_{1}, X_{2})$ We can now apply the same trick as $max$. In our specific case we don't need to do that since we have the constraint $A \leq 1$.
+
+$$ 
+\begin{aligned}
+\forall_{(a,b)} \in V \times V, a \neq b \quad &\\
+& A_{a,b} \geq |f(a) - f(b)| \\
+& A_{a,b} \geq |f(b) - f(a)| \\
+& A_{a,b} \leq 1
+\end{aligned}
+$$
 
 ### Example:
 
@@ -254,7 +269,7 @@ In other words, it's the total net preference of $x$ over every other candidate 
 
 In our problem we aren't given a set of ballots. Instead we have a list of matchups forming a tournament. We can view a pair $(i, j, k) \in A'$ as a $i$'s ballot preferring candidate $j$ to candidate $k$.
 
-Then we can enumerate over every student's matchup to find $Net(a > b)$.
+Then we can enumerate over every matchup to find $Net(a > b)$.
 
 $$
 j \succ_{A'_{i}} k = \begin{cases}
@@ -304,11 +319,11 @@ Next we have to enumerate through all possible rankings to find the ranking that
 
 Instead of doing an exhaustive search we can use local search with a metaheuristic to find an approximate solution. In my case I used simulated annealing which we'll talk about later.
 
-Either way, once compute the Kemeny ranking we can use it as a total order over $V$ and use it as our ranking $\preceq_{t'}$.
+Either way, once we compute the Kemeny ranking we can use it as a total order over $V$ and use it as our ranking $\preceq_{t'}$.
 
 ## Bradley-Terry-Luce (BTL)
 
-Under the Bradley-Terry-Luce (BTL) model, the probability of a student $a$ beating student $b$ is as follows:
+Under the Bradley-Terry-Luce (BTL) model, the probability of a student $a$ beating student $b$ is:
 
 $$P(a > b) = \frac{1}{1 + e^{-(w_{a} - w_{b})}}$$
 
@@ -318,11 +333,11 @@ If we assume that all matches are independent, then given a set of matches $A'$ 
 
 $$\mathcal{L}(\theta) = \prod_{(i, j, k) \in A'} \frac{1}{1 + e^{-(w_{j} - w_{k})}}$$
 
-Our next step will involve finding the values of $\theta$ that maximuse $\mathcal{L}(\theta)$. This will return a list of skill values $(w_{a}, w_{b}, \dots)$ that we can use as our ranking function $t'$.
+Our next step will involve finding the values of $\theta$ that maximise $\mathcal{L}(\theta)$. This will return a list of skill values $(w_{a}, w_{b}, \dots)$ that we can use as our ranking function $t'$.
 
 In practice we can actually take the log of the likelihood function to make it easier to maximise.
 
-$$\mathcal{L}(\theta) = \sum_{(i,j,k) \in A'} -ln(1 + e^{-(w_{i} - w_{j})})$$
+$$\mathcal{L}(\theta) = \sum_{(i,j,k) \in A'} -\ln(1 + e^{-(w_{i} - w_{j})})$$
 
 So to put it all together:
 
@@ -341,9 +356,28 @@ Where $a$ and $b$ are parameters that determine the relationship between student
 
 We can now apply the same steps as the BTL model to obtain a ranking $\preceq_{t'}$.
 
-$$\mathcal{L}(\theta, a, b) = \sum_{(i,j,k) \in A'} -ln(1 + e^{(aw_{i} + b)(w_{j} - w_{k})})$$
+$$\mathcal{L}(\theta, a, b) = \sum_{(i,j,k) \in A'} -\ln(1 + e^{(aw_{i} + b)(w_{j} - w_{k})})$$
 $$\hat{\theta} = \argmax_{\theta \in \Theta, a,b \in \mathbb{R}} \mathcal{L}(\theta)$$
 $$a \preceq_{t'} b \text{ iff } w_{a}^{\hat{\theta}} \leq w_{b}^{\hat{\theta}}$$
+
+# Iterative Ranking
+
+In the first method we distribute all the papers at once, obtain the entire tournament $A'$ and perform our ranking methods. What if instead we incrementally built up $A'$ in stages and used the incomplete information to distribute papers in such a way that maximises infomration.
+
+Here I'll outline the basic steps of our iterative paper distribution algorithm. 
+
+1. Distribute the first set of papers. For this I'll use the non-iterative paper distribution algorithm.
+2. Rank the students.
+3. Calculate a score for the skill of the student, based on the ranking.
+4. For the next set of papers, calculate an uncertainty score for each matchup.
+5. Pair up the most skilled players with the most uncertain matchups, while keeping the other constraints in play.
+
+We don't need to take into account prev assignments because each round we try to apply those constraints to the matchups the current assignements.
+
+# Implementation details
+
+# Evaluation
+
 
 # TODO: Synthetic data generation of $A'$/Something to think about
 
