@@ -26,7 +26,7 @@ Let $A$ the set of assignments.
 
 $(v_{i},v_{j},v_{k}) \in A$ means that student $v_{i}$ marks the matchup $(v_{j}, v_{k}) \in E.$
 
-$$A \subset E \times V \text{ where } \forall (v_{i},v_{j},v_{k}) \in A, v_{j} \neq v_{i} \neq v_{k}$$
+$$A \subset V \times E \text{ where } \forall (v_{i},v_{j},v_{k}) \in A, v_{j} \neq v_{i} \neq v_{k}$$
 
 Each student $v \in V$ has a score $t(v)$ that reprsents their score on the test.
 
@@ -79,7 +79,7 @@ $$ b \preceq_{t} d \preceq_{t} a \preceq_{t} c $$
 
 In order to measure closeness between 2 preorders we'll need a distance metric. One common metric is the Kendall tau distance. This measures the number of differing pairs in the 2 preorders.
 
-For example let's take the relations $\preceq_{t}$ and $\preceq_{t'}$ over $V = \{a, b, c\}$
+For example let's take the relations $\preceq_{t}$ and $\preceq_{t'}$ over $V = \{a, b, c, d\}$
 
 $$ c \preceq_{t} a \preceq_{t} d \preceq_{t} b $$
 $$\preceq_{t} = \{(b,d),(b,a),(b,c),(d,a),(d,c),(a,c),(a,a),(b,b),(c,c),(d,d)\}$$
@@ -96,21 +96,14 @@ $$K_{d}(\preceq_{t}, \preceq_{t'}) = |\preceq_{t} \setminus \preceq_{t}| = 4 $$
 
 $$|\preceq_{t} \setminus \preceq_{t'}| = |\preceq_{t'} \setminus \preceq_{t}|$$
 
-If we let $n$ be the number of items in our preorders, and the first preorder is the reverse of the second preorder, then $\frac{n(n-1)}{2}$ is the Kendall Tau distance between them. This corresponds to the situation where all the pairs are differing.
+If we let $n$ be the number of items in our preorders, and the first preorder is the reverse of the second preorder, then $\frac{n(n-1)}{2}$ is the Kendall Tau distance between them. This corresponds to the situation where all the pairs are differing. Dividing by this number will bring the Kendall tau distance into the range [0, 1].
 
 Therefore, the normalised Kendall tau distance $K_{n}$ is
 
 $$K_{n} = \frac{K_{d}}{\frac{n(n-1)}{2}} = \frac{2K_{d}}{n(n - 1)}$$
 
+
 # Choosing $A$ and $A'$
-
-## TODO: The size of $A$
-
-In the example given we've...
-
-Talk about workload, growth rate of giving out all pairs, what about with repeats etc...
-
-Maybe could move this section over into experimental bit. Coz we could talk about accuracy as we change the size of A
 
 ## Additional restrictions on $A$
 
@@ -174,9 +167,11 @@ To satisfy condition 3 we can add the following constraint. For every pair of st
 
 $$\forall (a, b) \in V \times V, a \neq b, \quad |f(a) - f(b)| \leq 1$$
 
-This next constraint ensures that every matchup in $E$ gets assigned. It also ensures that each matchup is marked only once. We could relax this constraint and change it to $\geq 1$ instead. This would mean that each matchup could be marked more than once.
+This next constraint ensures that every matchup in $E$ gets assigned. It also ensures that each matchup is marked only once. 
 
 $$\forall (j,k) \in E, \quad \sum_{v \in V} X_{v,j,k} = 1$$
+
+We could relax this constraint and change it to $\geq 1$ instead. This would mean that each matchup could be marked more than once. 
 
 ### Objective function
 
@@ -207,23 +202,24 @@ $$S = \{s(a, b) | (a, b) \in V \times V, a \neq b\}$$
 $$\forall_{x \in S} \quad M \geq x$$
 $$\text{minimise } M$$
 
-To find $abs(X_{1}, X_{2})$ we'll create another slack variable $A$.
+To find $abs(X_{1} - X_{2})$ we'll create another slack variable $A$.
 
 We can then add the constraints:
 
 $$A \geq X_{1} - X_{2}$$
 $$A \geq X_{2} - X_{1}$$
 
-$A$ will be larger than (or equal to) $abs(X_{1}, X_{2})$ We can now apply the same trick as $max$. In our specific case we don't need to do that since we have the constraint $A \leq 1$.
+$A$ will be larger than (or equal to) $abs(X_{1} - X_{2})$ We can now apply the same trick as $max$. In our specific case we don't need to do that since we have the constraint $A \leq 1$.
 
 $$ 
 \begin{aligned}
-\forall_{(a,b)} \in V \times V, a \neq b \quad &\\
-& A_{a,b} \geq |f(a) - f(b)| \\
+\forall_{(a,b)} \in V \times V, a \neq b \quad & A_{a,b} \geq |f(a) - f(b)| \\
 & A_{a,b} \geq |f(b) - f(a)| \\
 & A_{a,b} \leq 1
 \end{aligned}
 $$
+
+
 
 ### Example:
 
@@ -235,7 +231,7 @@ $$
 
 Now we can give these assignments to our students and obtain $A'$.
 
-# TODO: Ranking methods
+# Ranking methods
 
 Now that we've obtained a set of assignments we can now get to work on defining our ranking relation $\preceq_{t'}$.
 
@@ -244,7 +240,7 @@ I've implemented 5 different methods of ranking:
 - Borda Count 
 - Weighted Borda Count
 - Kemeny Score
-- Bradley-Terry-Luce (BTL) IDEA!
+- Bradley-Terry-Luce (BTL)
 - Refereed Bradley-Terry-Luce (RBTL)
 
 ## Borda Count
@@ -269,7 +265,7 @@ In other words, it's the total net preference of $x$ over every other candidate 
 
 In our problem we aren't given a set of ballots. Instead we have a list of matchups forming a tournament. We can view a pair $(i, j, k) \in A'$ as a $i$'s ballot preferring candidate $j$ to candidate $k$.
 
-Then we can enumerate over every matchup to find $Net(a > b)$.
+Then we can iterate over every matchup to find $Net(a > b)$.
 
 $$
 j \succ_{A'_{i}} k = \begin{cases}
@@ -279,25 +275,42 @@ j \succ_{A'_{i}} k = \begin{cases}
 \end{cases}
 $$
 
-$$Net(j > k) = \sum_{i \in V} j \succ_{A'_{i}} k $$
+$$Net_{A'}(j > k) = \sum_{i \in V} j \succ_{A'_{i}} k $$
 
-$$Borda(j) = \sum_{k \in V} Net(j > k)$$
+$$Borda(j) = \sum_{k \in V} Net_{A'}(j > k)$$
 
-In other words, if we take $A'$ to be a directed graph where if $(i, j, k) \in A'$, there's an edge $(j, k)$ and the set of nodes is $V$. Then for each node $a$ in $A'$, we $Borda(a) = indegree(a) - outdegree(a)$. 
+In other words, if we take $A'$ to be a directed graph where if $(i, j, k) \in A'$, there's an edge $(j, k)$ and the set of nodes is $V$. Then for each node $a$ in $A'$, we $Borda(a) = outdegree(a) - indegree(a)$. 
 
 Finally we can use $Borda(a)$ as our ranking function $t'$ to obtain a preorder $\preceq_{t'}$ over $V$.
 
 $$a \preceq_{t'} b \text{ iff } Borda(a) \leq Borda(b)$$
 
-## Weighted Borda Count:TODO
+## Weighted Borda Count
 
-Given a preorder $\preceq_{t'}$ over $V$ we can define an accuracy weighting $w$ for each student $v \in V$.
+Weighted borda score involves weighting each decision $j \succ_{A'_{i}} k$ with the skill level of the grader $i$. In order to obtain this skill level, we must first obtain a preorder $\preceq_{t'}$ given by the borda score we just defined. Given this preorder $\preceq_{t'}$ over $V$ we can apply topological sorting on $\preceq_{t'}$ to get a total order $\prec_{t'}$. There are multiple possible total orders $\prec_{t'}$ but we pick one at random. 
 
-$$n = |V|$$
+Now we can define the function $idx_{\prec_{t'}} : v \rightarrow \{1, 2, \dots, n\}$. Where $n = |V|$. That maps each grader to their place in the total order.
+
+Now for each student $v$ we can calculate a weighting value $w_{v}$.
+
 $$k = \frac{n(n + 1)}{2}$$
-$$w_{v} = \frac{n - idx(v)}{k}$$
+$$w_{v} = \frac{n - idx_{\prec_{t'}}(v)}{k}$$
 
-How to express idx as maths?
+Finally we can define our version of the weighted borda count.
+
+$$
+j \succ_{A'_{i}} k = \begin{cases}
+    w_{i} & \text{ if } (i, j, k) \in A' \\
+    -w_{i} & \text{ if } (i, k, j) \in A' \\
+    0 & \text{ otherwise}
+\end{cases}
+$$
+
+$$Net_{A'}(j > k) = \sum_{i \in V} j \succ_{A'_{i}} k $$
+
+$$WeightedBorda(j) = \sum_{k \in V} Net_{A'}(j > k)$$
+
+The rationale behind this is that higher scoring students are likely to be better graders. We divide by $k$ so that the weights are in the range $[0,1]$.
 
 ## Kemeny Score
 
@@ -311,15 +324,15 @@ $$Kemeny(\preceq_{t'}, B) = \sum_{(i, j) \in \preceq_{t'}} B_{i,j} - B_{j,i}$$
 
 One way to think about it is that it's calculating the Kendall tau distance between a ranking $\preceq_{t'}$ and the aggregated ballots. 
 
-In our case we don't have ballots, but we do have the pairwise comparisons needed to create the matrix. We reuse the $Net$ operation we defined for the Borda count to perform the same operation.
+In our case we don't have ballots, but we do have the pairwise comparisons needed to create the matrix. We reuse the $Net$ operation we defined for the (unweighted) Borda count to perform the same operation.
 
-$$Kemeny(\preceq_{t'}, B) = \sum_{(i, j) \in \preceq_{t'}} Net(i > j) - Net(j > i)$$
+$$Kemeny(\preceq_{t'}, A') = \sum_{(i, j) \in \preceq_{t'}} Net_{A'}(i > j) - Net_{A'}(j > i)$$
 
 Next we have to enumerate through all possible rankings to find the ranking that minimises the Kemeny score. That ranking will be the Kemeny ranking. However, now we have a problem there are $n!$ possible rankings (where $n$ is the length of the ranking). As $n$ grows larger this will be computationally intractable.
 
 Instead of doing an exhaustive search we can use local search with a metaheuristic to find an approximate solution. In my case I used simulated annealing which we'll talk about later.
 
-Either way, once we compute the Kemeny ranking we can use it as a total order over $V$ and use it as our ranking $\preceq_{t'}$.
+Either way, once we compute the Kemeny ranking we can use it as a preorder over $V$ and use it as our ranking $\preceq_{t'}$.
 
 ## Bradley-Terry-Luce (BTL)
 
@@ -376,8 +389,15 @@ We don't need to take into account prev assignments because each round we try to
 
 # Implementation details
 
-# Evaluation
+## TODO: The size of $A$
 
+In the example given we've...
+
+Talk about workload, growth rate of giving out all pairs, what about with repeats etc...
+
+Maybe could move this section over into experimental bit. Coz we could talk about accuracy as we change the size of A
+
+# Evaluation
 
 # TODO: Synthetic data generation of $A'$/Something to think about
 
