@@ -177,8 +177,8 @@ class IterativePaperDistributor:
 
         for asins in pair_contains.values():
             # Each pair is only assigned once
-            # self.prob += pl.lpSum(asins) >= 1
             self.prob += pl.lpSum(asins) == 1
+            # self.prob += pl.lpSum(asins) >= 1
 
         grader_pairs = pl.combination(self.students, 2)
         for i, (grader_1, grader_2) in enumerate(grader_pairs):

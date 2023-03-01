@@ -20,7 +20,7 @@ class Classroom:
         """
         score = self.get_student_score(student)
         if not self.malicious:
-            prob = score * 0.8 + 0.2
+            prob = score * 0.5 + 0.5
         else:
             prob = score
 

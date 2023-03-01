@@ -49,7 +49,7 @@ def btl_mle(tournament, inital_guess=None):
 
     inital_guess = inital_guess
     f = lambda guess: _btl_obj_func(guess, tournament)
-    bounds = Bounds(-50, 50)
+    bounds = Bounds(0, 1)
 
     ranking = minimize(f, inital_guess, bounds=bounds).x
     return ranking
@@ -62,7 +62,7 @@ def rbtl_mle(tournament, inital_guess=None):
     ab = [1, 1]
     inital_guess = ab + inital_guess
     f = lambda guess: _rbtl_obj_func(guess, tournament)
-    bounds = Bounds(-50, 50)
+    bounds = Bounds(0, 1)
 
     ranking = minimize(f, inital_guess, bounds=bounds).x
     ranking = ranking[2:]  # The first 2 values are a and b, we want the rest
