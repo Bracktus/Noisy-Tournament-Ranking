@@ -293,8 +293,7 @@ Now we can define the function $idx_{\prec_{t'}} : v \rightarrow \{1, 2, \dots, 
 
 Now for each student $v$ we can calculate a weighting value $w_{v}$.
 
-$$k = \frac{n(n + 1)}{2}$$
-$$w_{v} = \frac{n - idx_{\prec_{t'}}(v)}{k}$$
+$$w_{v} = \frac{n - idx_{\prec_{t'}}(v)}{n}$$
 
 Finally we can define our version of the weighted borda count.
 
@@ -379,13 +378,48 @@ In the first method we distribute all the papers at once, obtain the entire tour
 
 Here I'll outline the basic steps of our iterative paper distribution algorithm. 
 
-1. Distribute the first set of papers. For this I'll use the non-iterative paper distribution algorithm.
-2. Rank the students.
+1. Distribute the a set of papers. Each student will be given 1 matchup to mark. If this is the first pass, use the non-iterative paper distribution algorithm. Otherwise, use the Iterative version.
+2. Rank the students using one of the ranking methods E.g. RBTL, Kemeny...
 3. Calculate a score for the skill of the student, based on the ranking.
 4. For the next set of papers, calculate an uncertainty score for each matchup.
 5. Pair up the most skilled players with the most uncertain matchups, while keeping the other constraints in play.
+6. Until we've distributed the desired amount of papers, return to step 1.
 
-We don't need to take into account prev assignments because each round we try to apply those constraints to the matchups the current assignements.
+## Skill and uncertainty
+
+In steps 3 and 4 we estimate skill for players and uncertainty for matchups based on the ranking.
+
+For skill $w$ we can reuse the defintion from the weighted borda count.
+
+$$w_{v} = \frac{n - idx_{\prec_{t'}}(v)}{n}$$
+
+For uncertainty $u$ we could define it like this:
+
+$$u_{a,b} = \frac{|idx_{\prec_{t'}}(a) - idx_{\prec_{t'}}(b)|}{n}$$
+
+This ensures that matchups that are close together (even matches) have a uncertainty score, and matchups that are far apart (one-sided matches) are given a high uncertainty score.
+
+## The iterative paper distribution MILP model
+
+For the MILP model we can reuse the decision variables and constraints from the non-iterative model.
+
+For each assignment $(i,j,k) \in A$, we define a decision variable $X_{i,j,k} \in \{0, 1\}$.
+
+If $X_{i,j,k} = 1$ then the matchup $(j,k) \in E$ is assigned to player $i$.
+
+If $X_{i,j,k} = 0$ then the matchup $(j,k) \in E$ is not assigned to player $i$.
+
+$$f(v) = \sum_{(j, k) \in E} X_{v, j, k}$$
+
+$$\forall (a, b) \in V \times V, a \neq b, \quad |f(a) - f(b)| \leq 1$$
+
+$$\forall (j,k) \in E, \quad \sum_{v \in V} X_{v,j,k} = 1$$
+
+For the objective function we'll want to do something different. Since each student is only given 1 paper we don't need to worry about papers being concentrated into one person's hands. Instead we'll want the best players to be assigned the most uncertain matchups.
+
+$|w - u|$ will contain the distance between the skill and uncertainty. By minimising this number we'll be assiging the best players to the most uncertain matches.
+
+$$\text{ minimise} \sum_{(i,j,k) \in A} X_{i,j,k} \cdot |w_{i} - u_{j,k}|$$
 
 # Implementation details
 
