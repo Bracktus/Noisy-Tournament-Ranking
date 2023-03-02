@@ -1,5 +1,6 @@
-import sys 
-sys.path.append('..')
+import sys
+
+sys.path.append("..")
 import distribute_papers as pd
 from graph_utils import connected_graph
 
@@ -15,8 +16,6 @@ for plr in t:
     print(f"\t{plr} [color={plr + 1}]")
 for plr in t:
     for p1, p2 in t[plr]:
-        print(f'\t{p1}--{p2} [color={plr + 1}]')
+        print(f"\t{p1}--{p2} [color={plr + 1}]")
 
 print("}")
-
-

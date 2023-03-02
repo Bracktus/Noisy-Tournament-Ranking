@@ -1,8 +1,9 @@
-import sys 
-sys.path.append('..')
+import sys
+
+sys.path.append("..")
 
 import csv
-from tourney_runner import run_iterative_tourney 
+from tourney_runner import run_iterative_tourney
 from metrics import kendall_tau
 from rankers import rbtl, btl, kemeny, copeland
 from classroom import Classroom
@@ -21,7 +22,6 @@ fields = ["Num papers", "RBTL", "BTL", "KEMENY", "BORDA"]
 rows = []
 
 for papers in range(1, n):
-
     print(f"running tourney with {n} students and ~{papers} matchups to mark each")
     pairs = connected_graph(n, papers)
     distributor = dp.PaperDistributor(n, pairs)
@@ -39,21 +39,13 @@ for papers in range(1, n):
     print(f"cope: {t4}")
 
     kt1 = kendall_tau(real, t1)
-    print(
-        f"The distance between the true ranking and the rbtl ranking is: {kt1}"
-    )
+    print(f"The distance between the true ranking and the rbtl ranking is: {kt1}")
     kt2 = kendall_tau(real, t2)
-    print(
-        f"The distance between the true ranking and the btl ranking is: {kt2}"
-    )
+    print(f"The distance between the true ranking and the btl ranking is: {kt2}")
     kt3 = kendall_tau(real, t3)
-    print(
-        f"The distance between the true ranking and the kemeny ranking is: {kt3}"
-    )
+    print(f"The distance between the true ranking and the kemeny ranking is: {kt3}")
     kt4 = kendall_tau(real, t4)
-    print(
-        f"The distance between the true ranking and the copeland ranking is: {kt4}"
-    )
+    print(f"The distance between the true ranking and the copeland ranking is: {kt4}")
 
     print(f"The average grade of the class was {classroom.avg_grade()}")
 
@@ -62,10 +54,7 @@ for papers in range(1, n):
     print(" > ".join([v[1] for v in k]))
     rows.append([str(k) for k in [papers, kt1, kt2, kt3, kt4]])
 
-with open("data4.csv", 'w') as csvfile:
+with open("data4.csv", "w") as csvfile:
     csvwriter = csv.writer(csvfile)
     csvwriter.writerow(fields)
     csvwriter.writerows(rows)
-
-
-

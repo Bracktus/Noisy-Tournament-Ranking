@@ -10,9 +10,9 @@ def run_iterative_tourney(n, rounds, ranker, tourney_generator):
     classroom: the students participating
     """
 
-    #Big hack.
-    #run this BEFORE doing the the regular tournies.
-    #Otherwise it'll gain more information than it actually knows due to it ranking over the cache.
+    # Big hack.
+    # run this BEFORE doing the the regular tournies.
+    # Otherwise it'll gain more information than it actually knows due to it ranking over the cache.
 
     ppr = 1
     pairs = connected_graph(n, ppr)
@@ -39,6 +39,4 @@ def run_iterative_tourney(n, rounds, ranker, tourney_generator):
         tournament = tourney_generator.cache
         ranking = ranker(tournament)
 
-
     return ranking
-

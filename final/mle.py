@@ -1,16 +1,18 @@
 from scipy.optimize import minimize, Bounds
 import numpy as np
 
+
 def _btl_obj_func(skill_levels, tournament):
     likelihood_f = np.array([])
     for grader in tournament:
         matchups = tournament[grader]
         for p1, p2 in matchups:
-            j,k = skill_levels[p1], skill_levels[p2]
+            j, k = skill_levels[p1], skill_levels[p2]
             p_jk = np.log(1 + np.exp(-(j - k)))
             likelihood_f = np.append(likelihood_f, p_jk)
 
     return np.sum(likelihood_f)
+
 
 def _rbtl_obj_func(skill_levels, tournament):
     """
@@ -53,6 +55,7 @@ def btl_mle(tournament, inital_guess=None):
 
     ranking = minimize(f, inital_guess, bounds=bounds).x
     return ranking
+
 
 def rbtl_mle(tournament, inital_guess=None):
     tourney_len = len(tournament)

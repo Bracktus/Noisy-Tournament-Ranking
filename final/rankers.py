@@ -65,6 +65,7 @@ def rbtl(tournament):
     ranking = [student for (student, _) in ranking]
     return ranking
 
+
 def btl(tournament):
     """
     Finds the refereed bradley-terry model ranking of a tournament

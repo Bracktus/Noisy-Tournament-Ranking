@@ -16,7 +16,7 @@ class TournamentGenerator:
 
     def reset_iter_tourney(self):
         self.iter_tourney = defaultdict(list)
-    
+
     def populate_iter_tournament(self, assignments):
         for grader in assignments:
             matchups = assignments[grader]
@@ -25,7 +25,7 @@ class TournamentGenerator:
             for p1, p2 in matchups:
                 first_in = (p1, p2) in self.cache[grader]
                 second_in = (p2, p1) in self.cache[grader]
-                           
+
                 if first_in:
                     result = self.cache[grader]
                     self.iter_tourney[grader].append(result)
@@ -44,8 +44,6 @@ class TournamentGenerator:
                     self.cache[grader].append(result)
                     self.iter_tourney[grader].append(result)
 
-        
-
     def generate_tournament(self, assignments):
         """
         This returns a dictionary.
@@ -60,7 +58,7 @@ class TournamentGenerator:
             for p1, p2 in matchups:
                 first_in = (p1, p2) if (p1, p2) in self.cache[grader] else False
                 second_in = (p2, p1) if (p2, p1) in self.cache[grader] else False
-                           
+
                 if first_in:
                     tournament_results[grader].append(first_in)
                 elif second_in:
