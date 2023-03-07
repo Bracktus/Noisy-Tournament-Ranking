@@ -143,9 +143,9 @@ If we assume information on a student $v$ to be a measure of how many good grade
 
 If we take the grading skill out of the equation, then we can measure this by the number of times student $v$ appears in $E$. Taking this, we can satisfy this condition by constructing $E$ such that each student appears in $E$ a roughly equal amount of times.
 
-To solve this problem of matchup assignments we can turn to a Mixed Integer Linear Programming model.
+To solve this problem of matchup assignments we can turn to a Integer Linear Programming model.
 
-## The MILP Model for paper distribution.
+## The ILP Model for paper distribution.
 
 ### Decision Variables
 
@@ -385,6 +385,14 @@ Here I'll outline the basic steps of our iterative paper distribution algorithm.
 5. Pair up the most skilled players with the most uncertain matchups, while keeping the other constraints in play.
 6. Until we've distributed the desired amount of papers, return to step 1.
 
+One thing to note is that in the first pass, we need to produce a ranking with only $n$ matchups, where $n$ is the number of students. 
+
+However in order to obtain a ranking of the students we need every student to be represented in this set of matchups. If we didn't have this, then we wouldn't have any infomation on students that weren't included.
+
+This will correspond to a graph in which every node has at least one edge. Another property we'll want is for it to be connected. This would mean that there are no isolated subgraphs where we can't get an effective comparision to the main cohort.
+
+![An unconnected graph in which we can't compare $a$, $b$, $c$ to the main cohort](./figures/fig2.svg){width=50mm}
+
 ## Skill and uncertainty
 
 In steps 3 and 4 we estimate skill for players and uncertainty for matchups based on the ranking.
@@ -399,9 +407,9 @@ $$u_{a,b} = \frac{|idx_{\prec_{t'}}(a) - idx_{\prec_{t'}}(b)|}{n}$$
 
 This ensures that matchups that are close together (even matches) have a uncertainty score, and matchups that are far apart (one-sided matches) are given a high uncertainty score.
 
-## The iterative paper distribution MILP model
+## The iterative paper distribution ILP model
 
-For the MILP model we can reuse the decision variables and constraints from the non-iterative model.
+For the ILP model we can reuse the decision variables and constraints from the non-iterative model.
 
 For each assignment $(i,j,k) \in A$, we define a decision variable $X_{i,j,k} \in \{0, 1\}$.
 
@@ -421,15 +429,30 @@ $|w - u|$ will contain the distance between the skill and uncertainty. By minimi
 
 $$\text{ minimise} \sum_{(i,j,k) \in A} X_{i,j,k} \cdot |w_{i} - u_{j,k}|$$
 
+## Graph generation
+
+
+
 # Implementation details
 
-## TODO: The size of $A$
+## The size of $A$
 
-In the example given we've...
+As we increase the size of $A$, the workload of the students also increases. We want to strike a balance between obtaining more information to obtain an accurate ranking and not overburdening our students with too much work.
 
-Talk about workload, growth rate of giving out all pairs, what about with repeats etc...
+The total number of pairs that each player is $\binom{n}{2} = \frac{1}{2} n(n - 1)$. This scales quadratically, so if we gave every pair to every student. Then as the number of students increases, it'll quickly become infeasible to mark them all.
 
-Maybe could move this section over into experimental bit. Coz we could talk about accuracy as we change the size of A
+However, if we divide all the matchups along all the students, the the number of matchups will scale linearly. Of course this means we'll receive less information.
+
+| Number of students | $\binom{n}{2}$ | $\binom{n}{2} \div n$   |
+|--------------------|----------------|--------------------------|
+| 5                  | 10             | 2                        |
+| 10                 | 45             | 4.5                      |
+| 15                 | 105            | 7                        |
+| 20                 | 190            | 9.5                      |
+| 25                 | 300            | 12                       |
+| 30                 | 435            | 14.5                     |
+
+As we increase our class size to numbers seen in MOOCs, even linear scaling will be intractable. In these cases, we'll need to make a judgment call and cap the number of matchups assigned to playesr at the cost of calculating a worse ranking.
 
 # Evaluation
 
