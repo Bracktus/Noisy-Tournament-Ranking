@@ -1,8 +1,8 @@
 graph {
-    a[label="0.72", color="red"]
-    b[label="0.32", color="blue"]
-    c[label="0.95", color="yellow"]
-    d[label="0.45", color="green"]
+    a[label="a: 0.72", color="red"]
+    b[label="b: 0.32", color="blue"]
+    c[label="c: 0.95", color="yellow"]
+    d[label="d: 0.45", color="green"]
 
     edge [len=3]
     a -- b[color="yellow"]

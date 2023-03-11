@@ -28,7 +28,7 @@ $(v_{i},v_{j},v_{k}) \in A$ means that student $v_{i}$ marks the matchup $(v_{j}
 
 $$A \subset V \times E \text{ where } \forall (v_{i},v_{j},v_{k}) \in A, v_{j} \neq v_{i} \neq v_{k}$$
 
-Each student $v \in V$ has a score $t(v)$ that reprsents their score on the test.
+Each student $v \in V$ has a score $t(v)$ that represents their score on the test.
 
 $$t: V \rightarrow [0, 1]$$
 
@@ -96,12 +96,11 @@ $$K_{d}(\preceq_{t}, \preceq_{t'}) = |\preceq_{t} \setminus \preceq_{t}| = 4 $$
 
 $$|\preceq_{t} \setminus \preceq_{t'}| = |\preceq_{t'} \setminus \preceq_{t}|$$
 
-If we let $n$ be the number of items in our preorders, and the first preorder is the reverse of the second preorder, then $\frac{n(n-1)}{2}$ is the Kendall Tau distance between them. This corresponds to the situation where all the pairs are differing. Dividing by this number will bring the Kendall tau distance into the range [0, 1].
+If we let $n$ be the number of items in our preorders, and the first preorder is the reverse of the second preorder, then $\frac{n(n-1)}{2}$ is the Kendall Tau distance between them. This corresponds to the situation where all the pairs are differing. Dividing by this number will bring the Kendall tau distance into the range $[0, 1]$.
 
 Therefore, the normalised Kendall tau distance $K_{n}$ is
 
 $$K_{n} = \frac{K_{d}}{\frac{n(n-1)}{2}} = \frac{2K_{d}}{n(n - 1)}$$
-
 
 # Choosing $A$ and $A'$
 
@@ -145,11 +144,13 @@ If we take the grading skill out of the equation, then we can measure this by th
 
 To solve this problem of matchup assignments we can turn to a Integer Linear Programming model.
 
-## The ILP Model for paper distribution.
+## The ILP Model for matchup distribution.
 
 ### Decision Variables
 
-For each assignment $(i,j,k) \in A$, we define a decision variable $X_{i,j,k} \in \{0, 1\}$.
+For each assignment $(i,j,k) \in A$, we define a decision variable $X_{i,j,k} \in \{0, 1\}$. 
+
+We do not create both variables $X_{i, j, k}$ and $X_{i, k, j}$ since they represent the same assignment.
 
 If $X_{i,j,k} = 1$ then the matchup $(j,k) \in E$ is assigned to player $i$.
 
@@ -219,8 +220,6 @@ $$
 \end{aligned}
 $$
 
-
-
 ### Example:
 
 ![Edge list](./figures/fig2_no_col.svg){width=50%} 
@@ -285,6 +284,56 @@ Finally we can use $Borda(a)$ as our ranking function $t'$ to obtain a preorder 
 
 $$a \preceq_{t'} b \text{ iff } Borda(a) \leq Borda(b)$$
 
+### Example:
+
+$$V = \{a, b, c, d, e\}$$
+
+$$
+A' = \{(a, c, e), (a, b, d),
+       (b, a, e), (b, c, d),
+       (c, a, b), (c, d, e),
+       (d, c, a), (d, e, b),
+       (e, a, d), (e, c, b)
+       \}
+$$
+
+$$ c \succ_{A'_{a}} e = 1 \text{ since } (a, c, e) \in A' $$
+
+$$
+\begin{aligned}
+Net_{A'}(a > b) =& \sum_{i \in V} a \succ_{A'_{i}} b \\
+=& \, a \succ_{A'_{a}} b + a \succ_{A'_{b}} b + a \succ_{A'_{c}} b + a \succ_{A'_{d}} b + a \succ_{A'_{e}} b \\
+=& \, 0 + 0 + 1 + 0 + 0 \\
+=& \, 1
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+Borda(a) =& \sum_{i \in V} Net_{A'}(a > i) \\
+=& \, Net_{A'}(a > b) + Net_{A'}(a > c) + Net_{A'}(a > d) + Net_{A'}(a > e) \\
+=& \, 1 + (-1) + 1 + 1 \\
+=& \, 2 \\
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+&Borda(a) = &\,2 \\
+&Borda(b) = &\,{-2} \\
+&Borda(c) = &\,4 \\
+&Borda(d) = &\,{-2} \\
+&Borda(e) = &\,{-2} \\
+\end{aligned}
+$$
+
+
+The ranking would be $\{b, d, e\} \preceq_{t'} a \preceq_{t'} c$. 
+
+With a low number of students ties are common, as we increase the size of $V$, we encounter ties less often. In practice we would pick an arbitrary ordering of the tied students.
+
+![A visualisation of $A'$. You can also calculate $Borda(n)$ by calculating $outdegree(n) - indegree(n)$](./figures/fig3.svg){width=60mm}
+
 ## Weighted Borda Count
 
 Weighted borda score involves weighting each decision $j \succ_{A'_{i}} k$ with the skill level of the grader $i$. In order to obtain this skill level, we must first obtain a preorder $\preceq_{t'}$ given by the borda score we just defined. Given this preorder $\preceq_{t'}$ over $V$ we can apply topological sorting on $\preceq_{t'}$ to get a total order $\prec_{t'}$. There are multiple possible total orders $\prec_{t'}$ but we pick one at random. 
@@ -310,6 +359,51 @@ $$Net_{A'}(j > k) = \sum_{i \in V} j \succ_{A'_{i}} k $$
 $$WeightedBorda(j) = \sum_{k \in V} Net_{A'}(j > k)$$
 
 The rationale behind this is that higher scoring students are likely to be better graders. We divide by $k$ so that the weights are in the range $[0,1]$.
+
+### Example:
+
+First we'll need to turn the ranking calculated from the unweighted borda count into a preorder. The ranking would be $b \prec_{t'} d \prec_{t'} e \prec_{t'} a \prec_{t'} c$. 
+$$
+\begin{aligned}
+&w_{c} = \frac{5 - 0}{5} = 1 \\
+&w_{a} = \frac{5 - 1}{5} = 0.8 \\
+&w_{e} = \frac{5 - 2}{5} = 0.6 \\
+&w_{d} = \frac{5 - 3}{5} = 0.4 \\
+&w_{b} = \frac{5 - 4}{5} = 0.2 
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+Net_{A'}(a > b) =& \sum_{i \in V} a \succ_{A'_{i}} b \\
+=& \, a \succ_{A'_{a}} b + a \succ_{A'_{b}} b + a \succ_{A'_{c}} b + a \succ_{A'_{d}} b + a \succ_{A'_{e}} b \\
+=& \, 0 + 0 + w_{c} + 0 + 0 \\
+=& \, 1 
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+WeightedBorda(a) =& \sum_{i \in V} Net_{A'}(a > i) \\
+=& \, Net_{A'}(a > b) + Net_{A'}(a > c) + Net_{A'}(a > d) + Net_{A'}(a > e) \\
+=& \, 1 + (-0.4) + 0.6 + 0.2 \\
+=& \, 1.4 \\
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+&WeightedBorda(a) = &1.4 \\
+&WeightedBorda(b) = &1.2 \\
+&WeightedBorda(c) = &2 \\
+&WeightedBorda(d) = &-0.6\\
+&WeightedBorda(e) = &-1.6\\
+\end{aligned}
+$$
+
+Which gives us a ranking of $e \preceq_{t'} d \preceq_{t'} b \preceq_{t'} a \preceq_{t'} c$
+
+With the weighted borda count it's still possible to achieve ties, however it's less likely.
 
 ## Kemeny Score
 
@@ -374,22 +468,24 @@ $$a \preceq_{t'} b \text{ iff } w_{a}^{\hat{\theta}} \leq w_{b}^{\hat{\theta}}$$
 
 # Iterative Ranking
 
-In the first method we distribute all the papers at once, obtain the entire tournament $A'$ and perform our ranking methods. What if instead we incrementally built up $A'$ in stages and used the incomplete information to distribute papers in such a way that maximises infomration.
+In the first method we distribute all the matchups at once, obtain the entire tournament $A'$ and perform our ranking methods. What if instead we incrementally built up $A'$ in stages and used the incomplete information to distribute matchups in such a way that maximises information.
 
-Here I'll outline the basic steps of our iterative paper distribution algorithm. 
+Here I'll outline the basic steps of our iterative matchup distribution algorithm. 
 
-1. Distribute the a set of papers. Each student will be given 1 matchup to mark. If this is the first pass, use the non-iterative paper distribution algorithm. Otherwise, use the Iterative version.
+1. Distribute the a set of matchups. Each student will be given 1 matchup to mark. If this is the first pass, use the non-iterative matchup distribution algorithm. Otherwise, use the Iterative version.
 2. Rank the students using one of the ranking methods E.g. RBTL, Kemeny...
 3. Calculate a score for the skill of the student, based on the ranking.
-4. For the next set of papers, calculate an uncertainty score for each matchup.
+4. For the next set of matchups, calculate an uncertainty score for each matchup.
 5. Pair up the most skilled players with the most uncertain matchups, while keeping the other constraints in play.
-6. Until we've distributed the desired amount of papers, return to step 1.
+6. Until we've distributed the desired amount of matchups, return to step 1.
 
 One thing to note is that in the first pass, we need to produce a ranking with only $n$ matchups, where $n$ is the number of students. 
 
-However in order to obtain a ranking of the students we need every student to be represented in this set of matchups. If we didn't have this, then we wouldn't have any infomation on students that weren't included.
+However in order to obtain a ranking of the students we need every student to be represented in this set of matchups. If we didn't have this, then we wouldn't have any information on students that weren't included.
 
-This will correspond to a graph in which every node has at least one edge. Another property we'll want is for it to be connected. This would mean that there are no isolated subgraphs where we can't get an effective comparision to the main cohort.
+This will correspond to a graph (the set of matchups in step 1) in which every node has at least one edge. Another property we'll want is for it to be connected. This would mean that there are no isolated subgraphs where we can't get an effective comparison to the main cohort. 
+
+For this we can generate a cyclic graph. This will visit every node once and ensures the graph is connected.
 
 ![An unconnected graph in which we can't compare $a$, $b$, $c$ to the main cohort](./figures/fig2.svg){width=50mm}
 
@@ -397,7 +493,7 @@ This will correspond to a graph in which every node has at least one edge. Anoth
 
 In steps 3 and 4 we estimate skill for players and uncertainty for matchups based on the ranking.
 
-For skill $w$ we can reuse the defintion from the weighted borda count.
+For skill $w$ we can reuse the definition from the weighted borda count.
 
 $$w_{v} = \frac{n - idx_{\prec_{t'}}(v)}{n}$$
 
@@ -407,7 +503,7 @@ $$u_{a,b} = \frac{|idx_{\prec_{t'}}(a) - idx_{\prec_{t'}}(b)|}{n}$$
 
 This ensures that matchups that are close together (even matches) have a uncertainty score, and matchups that are far apart (one-sided matches) are given a high uncertainty score.
 
-## The iterative paper distribution ILP model
+## The iterative matchup distribution ILP model
 
 For the ILP model we can reuse the decision variables and constraints from the non-iterative model.
 
@@ -423,17 +519,97 @@ $$\forall (a, b) \in V \times V, a \neq b, \quad |f(a) - f(b)| \leq 1$$
 
 $$\forall (j,k) \in E, \quad \sum_{v \in V} X_{v,j,k} = 1$$
 
-For the objective function we'll want to do something different. Since each student is only given 1 paper we don't need to worry about papers being concentrated into one person's hands. Instead we'll want the best players to be assigned the most uncertain matchups.
+For the objective function we'll want the best players to be assigned the most uncertain matchups.
 
-$|w - u|$ will contain the distance between the skill and uncertainty. By minimising this number we'll be assiging the best players to the most uncertain matches.
+$|w - u|$ will contain the distance between the skill and uncertainty. By minimising this number we'll be assigning the best players to the most uncertain matches.
 
 $$\text{ minimise} \sum_{(i,j,k) \in A} X_{i,j,k} \cdot |w_{i} - u_{j,k}|$$
 
-## Graph generation
+One thing to note is that each time this is ran, it'll have no memory of the previous passes. Therefore, it may give out duplicate assignments. In order to avoid this, we'll store all previous assignments and prevent those decision variables from being created.
 
+### Side note: Brute force solution 
 
+A cycle graph, has a simple structure. A valid assignment of graph, without taking into account conditions 2, 3 and 4 from ['Additional restrictions on $A$'](#Additional restrictions on $A$), is a graph in which each edge is labelled. 
+
+The set of labels is the same as the set of vertices $V$. Each label must be used once, and if an edge is incident to a vertex $v$, then the edge cannot be labelled with $v$.
+
+For a cycle graph, the number of possible assignments of students can be described by the number of permutations $s$ of the sequence $0, 1, \dots n - 1$, such that $s[i] \neq i$ and $s[i] \neq i + 1 \mod n$ for all $i$.
+
+This is described by:
+
+$$A_{n} = \sum_{k = 0}^{n} (-1)^k \frac{2n}{2n - k}\binom{2n - k}{k} (n - k)!$$
+<!-- https://oeis.org/A000179 -->
+
+Which blows up very quickly. So to conclude, we cannot enumerate through all possible solutions.
 
 # Implementation details
+
+## Calculating Kemeny ranking - Simulated annealing
+
+Calculating the optimal Kemeny ranking is NP-Hard and as the number of students increases it become more difficult to find the solution.
+
+Therefore, we employ an approximation algorithm called Simulated annealing - a local search algorithm.
+
+It takes in 4 hyper parameters:
+
+- Temperature Length (TL)
+- Initial Temperature (TI)
+- Cooling Function (C)
+- Stopping Condition (S)
+
+As with local search algorithms, we need a neighbourhood function $neigh$. In our case it'll be swapping 2 adjacent players in the ranking. Using the right data structures, this will be calculated in $O(1)$ time.
+
+We'll also need an objective function that we're optimising. In our case, this will be the kemeny score.
+
+The algorithm is as follows:
+
+```
+define simulated_annealing(TL, TI, C, S, neigh, init_sol, obj) {
+    curr_sol = init_sol
+    best_sol = init_sol
+    best_cost = obj(init_sol)
+    temp = TI
+    iterations = 0
+    while not S(iterations) 
+    {
+        for i = 1 to TL 
+        {
+           temp_sol = neigh(curr_sol)
+           temp_cost = obj(temp_sol)
+           curr_cost = obj(curr_sol)
+           cost_diff = temp_cost - curr_cost
+           if cost_diff <= 0 
+           {
+                if temp_cost < best_cost {
+                    # The neighbour is better than
+                    # the best solution we've found so far
+                    best_sol = temp_sol
+                    best_cost = temp_cost
+                }
+                curr_sol = temp_sol
+           }
+           else
+           {
+                # The neighbour is worse so we generate a random number
+                # and see if it's larger than the value of p.
+                # p increases as temperature increases,
+                # so we make less uphill moves over time
+                q = random(0,1)
+                p = e^(-cost_diff/temp)
+                if q < p {
+                    curr_sol = temp_sol
+                }
+           }
+        }
+        iterations += 1
+        temp = C(temp)
+    }
+    return best_sol
+}
+```
+
+One thing to note is that the stopping condition here is given as a function of iterations. In practice, we can use other stopping conditions.
+Also for efficiency we calculate the value of `curr_cost` based on `neigh(curr_sol)` instead of recalculating from scratch.
 
 ## The size of $A$
 
@@ -441,7 +617,7 @@ As we increase the size of $A$, the workload of the students also increases. We 
 
 The total number of pairs that each player is $\binom{n}{2} = \frac{1}{2} n(n - 1)$. This scales quadratically, so if we gave every pair to every student. Then as the number of students increases, it'll quickly become infeasible to mark them all.
 
-However, if we divide all the matchups along all the students, the the number of matchups will scale linearly. Of course this means we'll receive less information.
+However, if we divide all the matchups along all the students, the number of matchups will scale linearly. Of course this means we'll receive less information.
 
 | Number of students | $\binom{n}{2}$ | $\binom{n}{2} \div n$   |
 |--------------------|----------------|--------------------------|
@@ -452,7 +628,15 @@ However, if we divide all the matchups along all the students, the the number of
 | 25                 | 300            | 12                       |
 | 30                 | 435            | 14.5                     |
 
-As we increase our class size to numbers seen in MOOCs, even linear scaling will be intractable. In these cases, we'll need to make a judgment call and cap the number of matchups assigned to playesr at the cost of calculating a worse ranking.
+As we increase our class size to numbers seen in MOOCs, even linear scaling will be intractable. In these cases, we'll need to make a judgement call and cap the number of matchups assigned to players at the cost of calculating a worse ranking.
+
+## Generating $A$
+
+### Non-Iterative
+
+For the iterative algorithm we want to generate a connected graph. We want to control the number of edges and keep the degrees of each node relatively equal
+
+### Iterative
 
 # Evaluation
 

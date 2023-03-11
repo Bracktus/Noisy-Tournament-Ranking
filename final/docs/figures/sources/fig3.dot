@@ -1,0 +1,25 @@
+digraph {
+    a[label="a", color="red"]
+    b[label="b", color="blue"]
+    c[label="c", color="yellow"]
+    d[label="d", color="green"]
+    e[label="e", color="purple"]
+
+    edge [len=3]
+    a -> b[color="yellow"]
+    a -> d[color="purple"]
+    a -> e[color="blue"]
+
+    c -> e[color="red"]
+    c -> d[color="blue"]
+    c -> a[color="green"]
+    c -> b[color="purple"]
+
+    b -> d[color="red"]
+
+    d -> e[color="yellow"]
+
+    e -> b[color="green"]
+}
+
+
