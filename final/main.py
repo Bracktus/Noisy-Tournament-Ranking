@@ -8,8 +8,8 @@ from generate_tourney import TournamentGenerator
 
 
 def main():
-    n = 22
-    papers = 19
+    n = 15
+    papers = 3
 
     classroom = Classroom(n, malicious=False)
     real = classroom.get_true_ranking()
@@ -20,12 +20,17 @@ def main():
     iter_ranking = run_iterative_tourney(n, papers - 1, rbtl, tourney_generator)
     kt0 = kendall_tau(real, iter_ranking)
 
+    tourney_generator.reset_iter_tourney()
+    iter_ranking2 = run_iterative_tourney(n, papers - 1, copeland, tourney_generator)
+    kt_s = kendall_tau(real, iter_ranking2)
+
     pairs = connected_graph(n, papers)
     distributor = dp.PaperDistributor(n, pairs)
     assignments = distributor.get_solution()
     tourney = tourney_generator.generate_tournament(assignments)
 
     print(f"iter: {iter_ranking}")
+    print(f"iter2: {iter_ranking2}")
     t1 = rbtl(tourney)
     print(f"rbtl: {t1}")
     t2 = btl(tourney)
@@ -35,6 +40,7 @@ def main():
     t4 = copeland(tourney)
     print(f"cope: {t4}")
 
+    print(f"The distance between the true ranking and the iter cope rbtl ranking is: {kt_s}")
     print(f"The distance between the true ranking and the iter rbtl ranking is: {kt0}")
     kt1 = kendall_tau(real, t1)
     print(f"The distance between the true ranking and the rbtl ranking is: {kt1}")

@@ -11,6 +11,12 @@ class TournamentGenerator:
         self.tournament_generated = False
         self.classroom = classroom
 
+        """
+        We need a cache to ensure our data is consistent across tests.
+        (i, j, k) should remain the same whenever we rerun a tourney with different assignments.
+        This allows us to compare the ranking methods with at least some accuracy.
+        """
+
     def get_grader_prob(self, grader, p1, p2):
         return self.classroom.grader_skill(grader)
 
@@ -18,20 +24,23 @@ class TournamentGenerator:
         self.iter_tourney = defaultdict(list)
 
     def populate_iter_tournament(self, assignments):
+        """
+        For iterative tournaments we need to maintain state.
+        We'll store this state in self.iter_tourney. 
+        However before we run a second iterative tournament we need to run reset_iter_tourney.
+        In order to prevent information leakage into the next tourney.
+        """
         for grader in assignments:
             matchups = assignments[grader]
             grader_prob = self.classroom.grader_skill(grader)
 
             for p1, p2 in matchups:
-                first_in = (p1, p2) in self.cache[grader]
-                second_in = (p2, p1) in self.cache[grader]
+                if (p1, p2) in self.cache[grader]:
+                    self.iter_tourney[grader].append((p1, p2))
 
-                if first_in:
-                    result = self.cache[grader]
-                    self.iter_tourney[grader].append(result)
-                elif second_in:
-                    result = self.cache[grader]
-                    self.iter_tourney[grader].append(result)
+                elif (p2, p1) in self.cache[grader]:
+                    self.iter_tourney[grader].append((p2, p1))
+
                 else:
                     grades = self.classroom.grades
                     winner, loser = (p1, p2) if grades[p1] > grades[p2] else (p2, p1)

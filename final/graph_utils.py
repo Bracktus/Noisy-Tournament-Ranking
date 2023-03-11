@@ -1,5 +1,19 @@
-from random import randint
+from random import randint, shuffle
 
+def random_cycle(n):
+    cycle_list = [i for i in range(n)]
+    shuffle(cycle_list)
+
+    shifted = cycle_list[1:]
+
+    graph = set()
+
+    for pair in zip(cycle_list, shifted):
+        graph.add(pair)
+
+    final_pair = (cycle_list[0], cycle_list[-1])
+    graph.add(final_pair)
+    return graph
 
 def random_connected_graph(n):
     """

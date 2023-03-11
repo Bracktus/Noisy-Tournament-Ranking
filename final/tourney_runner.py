@@ -1,5 +1,5 @@
 import distribute_papers as dp
-from graph_utils import connected_graph
+from graph_utils import random_cycle
 
 
 def run_iterative_tourney(n, rounds, ranker, tourney_generator):
@@ -15,17 +15,18 @@ def run_iterative_tourney(n, rounds, ranker, tourney_generator):
     # Otherwise it'll gain more information than it actually knows due to it ranking over the cache.
 
     ppr = 1
-    pairs = connected_graph(n, ppr)
+    pairs = random_cycle(n)
     assigner = dp.PaperDistributor(n, pairs)
     assignments = assigner.get_solution()
 
-    tournament = tourney_generator.generate_tournament(assignments)
+    tourney_generator.populate_iter_tournament(assignments)
+    tournament = tourney_generator.iter_tourney
     ranking = ranker(tournament)
 
     seen_assignments = assignments
     for _ in range(rounds - 1):
         # rounds - 1 because we already did 1 round
-        pairs = connected_graph(n, ppr)
+        pairs = random_cycle(n)
         assigner = dp.IterativePaperDistributor(
             n=n, ranking=ranking, pairs=pairs, past_tourneys=seen_assignments
         )
@@ -35,8 +36,8 @@ def run_iterative_tourney(n, rounds, ranker, tourney_generator):
             for matchup in assignments[grader]:
                 seen_assignments[grader].append(matchup)
 
-        tourney_generator.generate_tournament(assignments)
-        tournament = tourney_generator.cache
+        tourney_generator.populate_iter_tournament(assignments)
+        tournament = tourney_generator.iter_tourney
         ranking = ranker(tournament)
 
     return ranking
