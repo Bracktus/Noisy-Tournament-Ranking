@@ -338,7 +338,7 @@ With a low number of students ties are common, as we increase the size of $V$, w
 
 Weighted borda score involves weighting each decision $j \succ_{A'_{i}} k$ with the skill level of the grader $i$. In order to obtain this skill level, we must first obtain a preorder $\preceq_{t'}$ given by the borda score we just defined. Given this preorder $\preceq_{t'}$ over $V$ we can apply topological sorting on $\preceq_{t'}$ to get a total order $\prec_{t'}$. There are multiple possible total orders $\prec_{t'}$ but we pick one at random. 
 
-Now we can define the function $idx_{\prec_{t'}} : v \rightarrow \{1, 2, \dots, n\}$. Where $n = |V|$. That maps each grader to their place in the total order.
+Now we can define the function $idx_{\prec_{t'}} : V \rightarrow \{1, 2, \dots, n\}$. Where $n = |V|$. That maps each grader to their place in the total order.
 
 Now for each student $v$ we can calculate a weighting value $w_{v}$.
 
@@ -483,9 +483,7 @@ One thing to note is that in the first pass, we need to produce a ranking with o
 
 However in order to obtain a ranking of the students we need every student to be represented in this set of matchups. If we didn't have this, then we wouldn't have any information on students that weren't included.
 
-This will correspond to a graph (the set of matchups in step 1) in which every node has at least one edge. Another property we'll want is for it to be connected. This would mean that there are no isolated subgraphs where we can't get an effective comparison to the main cohort. 
-
-For this we can generate a cyclic graph. This will visit every node once and ensures the graph is connected.
+This will correspond to a graph (the set of matchups in step 1) in which every node has at least one edge. Another property we'll want is for it to be connected. This would mean that there are no isolated subgraphs where we can't get an effective comparison to the main cohort. We'll talk about the generation of this graph in a later section.
 
 ![An unconnected graph in which we can't compare $a$, $b$, $c$ to the main cohort](./figures/fig2.svg){width=50mm}
 
@@ -634,7 +632,50 @@ As we increase our class size to numbers seen in MOOCs, even linear scaling will
 
 ### Non-Iterative
 
-For the iterative algorithm we want to generate a connected graph. We want to control the number of edges and keep the degrees of each node relatively equal
+For the non-iterative algorithm we want to generate a graph $G = (V, E), \, A \subset V \times E$.
+
+We want to 
+
+1. Control the number of nodes.
+2. Control the number of edges.
+3. Have it be connected.
+4. Keep the degrees of each node relatively equal.
+
+Condition 1 is necessary because we want have a graph that includes every student.
+
+Condition 2 is there because we want to be able to control the number of papers each student has to mark. 
+
+Condition 3 is required to enusre that we don't have isolated subgraphs where we can't compare students to the main cohort.
+
+Condition 4 is needed to ensure the information gleamed from each student isn't unbalanced.
+
+One method that fulfils 3 of these conditions is to generate a connected $k$-regular graph.
+
+### Connected $k$-regular graph generation 
+
+A $k$-regular graph is a graph in which every node has the same number of neighbours. 
+
+Given $n$ nodes, a $k$-regular graph only exists if $kn$ is even and $n \geq k + 1$. 
+
+<!-- https://math.stackexchange.com/questions/142112/how-to-construct-a-k-regular-graph -->
+An algorithm to generate a $k$-regular graph is as follows:
+
+1. Lay out all your nodes in a circle
+2. If $k = 2m$ is even, then connect each node to it's nearest $m$ neighbours
+3. else if  $k = 2m + 1$ is odd, then connect each node to it's nearest $m$ neighbours and it's opposite vertex.
+
+![](./figures/kreg_odd.svg){width=50%}
+![](./figures/kreg_even.svg){width=50%}
+\begin{figure}[!h]
+\caption{$k=3, n=6$ on the left, $k=4, n=6$ on the right}
+\end{figure}
+
+
+If $k \geq 2$, then for each node will be connected to it's nearest 2 neighbours. Therefore for every graph where $k \geq 2$ generated with this method will have a cycle as a subgraph, and will be connected, satisfying condition 3.
+
+Condition 4 is fulfilled, since every node has the same degree and condition 1 is easy since we can just choose $n$.
+
+Condition 2 is a bit tricky. Every $k$-regular graph has $nk/2$ edges. Since $|E| = nk/2$, if we have $n$ students and we want $n k_{1} < r < n k_{2}$ edges, then it's impossible. $|E|$ must be a multiple of $k/2$.
 
 ### Iterative
 
