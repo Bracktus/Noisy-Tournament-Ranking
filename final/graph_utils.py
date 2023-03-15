@@ -1,5 +1,6 @@
 from random import randint, shuffle
 
+
 def random_cycle(n):
     cycle_list = [i for i in range(n)]
     shuffle(cycle_list)
@@ -13,6 +14,41 @@ def random_cycle(n):
 
     final_pair = (cycle_list[0], cycle_list[-1])
     graph.add(final_pair)
+    return graph
+
+def fair_graph(n, e):
+    """
+    Iterative builds up a graph with n nodes and e edges.
+    The maximum degree - minimum degree will always be less than 3.
+    """
+    # Create a cycle
+    nodes = [i for i in range(n)]
+    shuffle(nodes)
+    shifted = nodes[1:]
+    graph = set()
+    for pair in zip(nodes, shifted):
+        graph.add(pair)
+    final_pair = (nodes[0], nodes[-1])
+    graph.add(final_pair)
+
+    # Current number of edges
+    edges = n
+
+    node_idx = 0
+    shift_val = 2
+
+    while edges < e:
+        node = nodes[node_idx]
+        neighbour = nodes[(node_idx + shift_val) % n]
+        pair = (node, neighbour)
+        graph.add(pair)
+
+        node_idx = (node_idx + 1) % n
+        if node_idx == n - 1:
+            shift_val += 1
+
+        edges += 1
+            
     return graph
 
 def random_connected_graph(n):

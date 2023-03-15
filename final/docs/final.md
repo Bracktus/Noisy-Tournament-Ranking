@@ -8,6 +8,7 @@ geometry:
 header-includes:
   - \usepackage[ruled,vlined,linesnumbered]{algorithm2e}
   - \newcommand{\argmax}{\mathop{\mathrm{argmax}}\limits}
+  - \newcommand{\argmin}{\mathop{\mathrm{argmin}}\limits}
 ---
 
 # Mathematical formulation of the problem:
@@ -150,7 +151,7 @@ To solve this problem of matchup assignments we can turn to a Integer Linear Pro
 
 For each assignment $(i,j,k) \in A$, we define a decision variable $X_{i,j,k} \in \{0, 1\}$. 
 
-We do not create both variables $X_{i, j, k}$ and $X_{i, k, j}$ since they represent the same assignment.
+We do not create both $X_{i, j, k}$ and $X_{i, k, j}$ since they represent the same assignment.
 
 If $X_{i,j,k} = 1$ then the matchup $(j,k) \in E$ is assigned to player $i$.
 
@@ -158,7 +159,7 @@ If $X_{i,j,k} = 0$ then the matchup $(j,k) \in E$ is not assigned to player $i$.
 
 ### Constraints
 
-Let's define a function $f(v)$. This takes in a student $v$ and returns the sum of all the decision variables that represents a matchup being assigned to $v$. In other words it's the total number of matchups student $v$ marks.
+Let's define a function $f(v)$. This takes in a student $v$ and returns the sum of all the decision variables that represents a matchup being assigned to $v$. In other words it's the total number of matchups that student $v$ marks.
 
 $$f(v) = \sum_{(j, k) \in E} X_{v, j, k}$$
 
@@ -178,7 +179,7 @@ We could relax this constraint and change it to $\geq 1$ instead. This would mea
 
 Let's define a function $s(a, b)$. This takes in 2 students $a$ and $b$, and returns the number of times a matchup containing $b$ is assigned to $a$. For example if $A = \{(a, b, c), (a, b, d), (a, f, b), (a, j, k)\}$, then $s(a, b) = 3$
 
-$$s(a,b) = \sum_{v \in V} X_{a, b,v} + X_{a, v, b}$$
+$$s(a,b) = \sum_{v \in V} X_{a, b, v} + X_{a, v, b}$$
 
 We can now define our objective function. This corresponds to condition 2 which avoids concentrating all of player $b$'s matches in the hands of player $a$.
 
@@ -210,7 +211,7 @@ We can then add the constraints:
 $$A \geq X_{1} - X_{2}$$
 $$A \geq X_{2} - X_{1}$$
 
-$A$ will be larger than (or equal to) $abs(X_{1} - X_{2})$ We can now apply the same trick as $max$. In our specific case we don't need to do that since we have the constraint $A \leq 1$.
+$A$ will be larger than (or equal to) $abs(X_{1} - X_{2})$. We can now apply the same trick as $max$. In our specific case we don't need to do that since we have the constraint $A \leq 1$.
 
 $$ 
 \begin{aligned}
@@ -327,22 +328,29 @@ $$
 \end{aligned}
 $$
 
-
 The ranking would be $\{b, d, e\} \preceq_{t'} a \preceq_{t'} c$. 
 
 With a low number of students ties are common, as we increase the size of $V$, we encounter ties less often. In practice we would pick an arbitrary ordering of the tied students.
 
 ![A visualisation of $A'$. You can also calculate $Borda(n)$ by calculating $outdegree(n) - indegree(n)$](./figures/fig3.svg){width=60mm}
 
-## Weighted Borda Count
+## Weighted Borda Count 
 
-Weighted borda score involves weighting each decision $j \succ_{A'_{i}} k$ with the skill level of the grader $i$. In order to obtain this skill level, we must first obtain a preorder $\preceq_{t'}$ given by the borda score we just defined. Given this preorder $\preceq_{t'}$ over $V$ we can apply topological sorting on $\preceq_{t'}$ to get a total order $\prec_{t'}$. There are multiple possible total orders $\prec_{t'}$ but we pick one at random. 
+Weighted borda score involves weighting each decision $j \succ_{A'_{i}} k$ with the skill level of the grader $i$. 
 
-Now we can define the function $idx_{\prec_{t'}} : V \rightarrow \{1, 2, \dots, n\}$. Where $n = |V|$. That maps each grader to their place in the total order.
+Now we can define a function $idx_{\preceq_{t'}}: V \rightarrow \{1, 2 \dots, n\}$ that maps each grader to their place in the ranking. 
 
-Now for each student $v$ we can calculate a weighting value $w_{v}$.
+Since we have ties, we want to give people at the same rank, the same $idx$ level. 
 
-$$w_{v} = \frac{n - idx_{\prec_{t'}}(v)}{n}$$
+$$idx_{\preceq_{t'}}(a) = |\{b \in V | (a, b) \in \preceq_{t'} \wedge \, (b,a) \notin \preceq_{t'}\}|$$
+
+In other words, it's the number of students that student $a$ strictly beats.
+
+Now for each student $v$ we can calculate a weight $w_{v}$.
+
+$$w_{v} = \frac{idx_{\prec_{t'}}(v)}{n}$$
+
+The rationale behind this is that higher scoring students are likely to be better graders. We divide by $n$ so that the weights are in the range $[0,1]$.
 
 Finally we can define our version of the weighted borda count.
 
@@ -354,22 +362,33 @@ j \succ_{A'_{i}} k = \begin{cases}
 \end{cases}
 $$
 
-$$Net_{A'}(j > k) = \sum_{i \in V} j \succ_{A'_{i}} k $$
+$$Net_{A'}(j > k) = \sum_{i \in V} j \succ_{A'_{i}} k$$
 
 $$WeightedBorda(j) = \sum_{k \in V} Net_{A'}(j > k)$$
 
-The rationale behind this is that higher scoring students are likely to be better graders. We divide by $k$ so that the weights are in the range $[0,1]$.
-
 ### Example:
 
-First we'll need to turn the ranking calculated from the unweighted borda count into a preorder. The ranking would be $b \prec_{t'} d \prec_{t'} e \prec_{t'} a \prec_{t'} c$. 
+First let's get our relation defined by the unweighted borda count.
+
 $$
 \begin{aligned}
-&w_{c} = \frac{5 - 0}{5} = 1 \\
-&w_{a} = \frac{5 - 1}{5} = 0.8 \\
-&w_{e} = \frac{5 - 2}{5} = 0.6 \\
-&w_{d} = \frac{5 - 3}{5} = 0.4 \\
-&w_{b} = \frac{5 - 4}{5} = 0.2 
+\preceq_{t'} = \{&(c, a), (c, e), (c, d), (c, b) \\
+                 &(a, e), (a, d), (a, b) \\
+                 &(e, d), (e, b) \\
+                 &(d, e), (d, b) \\
+                 &(b, e), (b, d) \\
+                 &(a, a), (b, b), (c, c), (d, d) (e, e)
+               \}
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+idx_{\preceq_{t'}}(a) =& 3 &w_{a} = \frac{3}{5} = 0.6 \\
+idx_{\preceq_{t'}}(b) =& 0 &w_{b} = \frac{0}{5} = 0.0 \\
+idx_{\preceq_{t'}}(c) =& 4 &w_{c} = \frac{4}{5} = 0.8 \\
+idx_{\preceq_{t'}}(d) =& 0 &w_{d} = \frac{0}{5} = 0.0 \\
+idx_{\preceq_{t'}}(e) =& 0 &w_{e} = \frac{0}{5} = 0.0 
 \end{aligned}
 $$
 
@@ -378,7 +397,7 @@ $$
 Net_{A'}(a > b) =& \sum_{i \in V} a \succ_{A'_{i}} b \\
 =& \, a \succ_{A'_{a}} b + a \succ_{A'_{b}} b + a \succ_{A'_{c}} b + a \succ_{A'_{d}} b + a \succ_{A'_{e}} b \\
 =& \, 0 + 0 + w_{c} + 0 + 0 \\
-=& \, 1 
+=& \, 0.8 
 \end{aligned}
 $$
 
@@ -386,24 +405,23 @@ $$
 \begin{aligned}
 WeightedBorda(a) =& \sum_{i \in V} Net_{A'}(a > i) \\
 =& \, Net_{A'}(a > b) + Net_{A'}(a > c) + Net_{A'}(a > d) + Net_{A'}(a > e) \\
-=& \, 1 + (-0.4) + 0.6 + 0.2 \\
-=& \, 1.4 \\
+=& \, 0.8 + (-0) + 0 + 0 \\
 \end{aligned}
 $$
 
 $$
 \begin{aligned}
-&WeightedBorda(a) = &1.4 \\
-&WeightedBorda(b) = &1.2 \\
-&WeightedBorda(c) = &2 \\
-&WeightedBorda(d) = &-0.6\\
-&WeightedBorda(e) = &-1.6\\
+&WeightedBorda(a) = &0.8 \\
+&WeightedBorda(b) = &-0.2 \\
+&WeightedBorda(c) = &0.6 \\
+&WeightedBorda(d) = &0.2\\
+&WeightedBorda(e) = &-1.4\\
 \end{aligned}
 $$
 
-Which gives us a ranking of $e \preceq_{t'} d \preceq_{t'} b \preceq_{t'} a \preceq_{t'} c$
+Which gives us a ranking of $e \preceq_{t'} b \preceq_{t'} d \preceq_{t'} c \preceq_{t'} a$
 
-With the weighted borda count it's still possible to achieve ties, however it's less likely.
+Despite this result, with the weighted borda count it's still possible to achieve ties. 
 
 ## Kemeny Score
 
@@ -415,17 +433,56 @@ Next we test all possible rankings and calculate a score for each ranking. This 
 
 $$Kemeny(\preceq_{t'}, B) = \sum_{(i, j) \in \preceq_{t'}} B_{i,j} - B_{j,i}$$
 
-One way to think about it is that it's calculating the Kendall tau distance between a ranking $\preceq_{t'}$ and the aggregated ballots. 
+One way to think about it is that it's calculating the Kendall tau *similarity* between a ranking $\preceq_{t'}$ and the aggregated ballots. 
 
 In our case we don't have ballots, but we do have the pairwise comparisons needed to create the matrix. We reuse the $Net$ operation we defined for the (unweighted) Borda count to perform the same operation.
 
 $$Kemeny(\preceq_{t'}, A') = \sum_{(i, j) \in \preceq_{t'}} Net_{A'}(i > j) - Net_{A'}(j > i)$$
 
-Next we have to enumerate through all possible rankings to find the ranking that minimises the Kemeny score. That ranking will be the Kemeny ranking. However, now we have a problem there are $n!$ possible rankings (where $n$ is the length of the ranking). As $n$ grows larger this will be computationally intractable.
+Next we have to enumerate through all possible rankings to find the ranking that maximises the Kemeny score. That ranking will be the Kemeny ranking. However, now we have a problem there are $n!$ possible rankings (where $n$ is the length of the ranking). As $n$ grows larger this will be computationally intractable.
 
 Instead of doing an exhaustive search we can use local search with a metaheuristic to find an approximate solution. In my case I used simulated annealing which we'll talk about later.
 
 Either way, once we compute the Kemeny ranking we can use it as a preorder over $V$ and use it as our ranking $\preceq_{t'}$.
+
+### Example: 
+
+The optimal kemeny ranking $\preceq_{t'}$ is:
+
+$$\preceq_{t'} = \argmax_{\preceq \in \preceq_{t^*}} Kemeny(\preceq, A')$$ 
+
+$$\text{ where } \preceq_{t^*} \text{ is the set of all preorders over } V$$
+
+$$e \preceq_{t'} d \preceq_{t'} b \preceq_{t'} a \preceq_{t'} c$$
+
+$$
+\begin{aligned}
+\preceq{t} = \{&(c, a), (c, b), (c, d), (c, e), \\
+               &(a, b), (a, d), (a, e), \\
+               &(b, d), (b, e), \\
+               &(d, e),\\
+               &(a,a), (b,b), (c,c), (d,d), (e,e)
+              \}
+\end{aligned}
+$$
+
+$$
+A' = \{(a, c, e), (a, b, d),
+       (b, a, e), (b, c, d),
+       (c, a, b), (c, d, e),
+       (d, c, a), (d, e, b),
+       (e, a, d), (e, c, b)
+       \}
+$$
+
+$$
+\begin{aligned}
+Kemeny(\preceq_{t'}, A') =& \sum_{(i, j) \in \preceq_{t'}} Net_{A'}(i > j) - Net_{A'}(j > i) \\
+=& \, [Net_{A'}(b > e) - Net_{A'}(c > a)] + \dots + [Net_{A'}(e > e) - Net_{A'}(e > e)] \\
+=& \, 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 - 1 + 1 \\
+=& \, 8
+\end{aligned}
+$$
 
 ## Bradley-Terry-Luce (BTL)
 
@@ -435,7 +492,7 @@ $$P(a > b) = \frac{1}{1 + e^{-(w_{a} - w_{b})}}$$
 
 Where $w_{a}$ and $w_{b}$ are the skill levels of $a$ and $b$.
 
-If we assume that all matches are independent, then given a set of matches $A'$ we can multiply them together to get the probability of the tournament happening. This will also be our likelihood function $\mathcal{L}(\theta)$. Where $\theta = (w_{a}, w_{b}, \dots)$. $\Theta$ is the parameter space which contains all possible values for $\theta$.
+If we assume that all matches are independent, then given a set of matches $A'$, we can multiply them together to get the probability of the tournament happening. This will also be our likelihood function $\mathcal{L}(\theta)$. Where $\theta = (w_{a}, w_{b}, \dots)$. $\Theta$ is the parameter space which contains all possible values for $\theta$.
 
 $$\mathcal{L}(\theta) = \prod_{(i, j, k) \in A'} \frac{1}{1 + e^{-(w_{j} - w_{k})}}$$
 
@@ -443,18 +500,44 @@ Our next step will involve finding the values of $\theta$ that maximise $\mathca
 
 In practice we can actually take the log of the likelihood function to make it easier to maximise.
 
-$$\mathcal{L}(\theta) = \sum_{(i,j,k) \in A'} -\ln(1 + e^{-(w_{i} - w_{j})})$$
+$$\mathcal{L}(\theta) = \sum_{(i,j,k) \in A'} -\ln(1 + e^{-(w_{j} - w_{k})})$$
 
 So to put it all together:
 
 $$\hat{\theta} = \argmax_{\theta \in \Theta} \mathcal{L}(\theta)$$
 $$a \preceq_{t'} b \text{ iff } w_{a}^{\hat{\theta}} \leq w_{b}^{\hat{\theta}}$$
 
-Note that method and all of the previous methods (barring weighted borda) doesn't take into account who's grading the matchups. We'll rectify that in the next ranking method.
+Note that this method and all of the previous methods, (barring weighted borda) doesn't take into account who's grading the matchups. We'll rectify that in the next ranking method.
+
+### Example:
+
+$$
+A' = \{(a, c, e), (a, b, d),
+       (b, a, e), (b, c, d),
+       (c, a, b), (c, d, e),
+       (d, c, a), (d, e, b),
+       (e, a, d), (e, c, b)
+       \}
+$$
+
+$$
+\begin{aligned}
+\hat{\theta} =& \argmax_{\theta \in \Theta} \mathcal{L}(\theta) \\
+=& \argmax_{\theta \in \Theta} \sum_{(i,j,k) \in A'} -\ln(1 + e^{-(w_{j} - w_{k})}) \\
+=& \argmax_{\theta \in \Theta} \, [-\ln(1 + e^{-(w_{c} - w_{e})})] + \dots + [-\ln(1 + e^{-w_{c} - w_{b}})] \\
+=& (w_{a}, w_{b}, w_{c}, w_{d}, w_{e}) \\
+=& (5.65199411, -6.81344253, 17.28832547, -6.81344251, -6.81344256)
+ \\
+\end{aligned}
+$$
+
+$$e \preceq_{t'} b \preceq_{t'} d \preceq_{t'} a \preceq_{t'} c$$
 
 ## Refereed Bradley-Terry-Luce (RBTL)
 
-The RBTL model is very similar to the BTL model with one small difference. Instead of taking pairwise matchups, we also take into the account the grader. So the probability of student $j$ beating student $k$ with student $i$ grading the matchup is:
+The RBTL model is very similar to the BTL model with one small difference. We also take into the account the grader.
+
+So the probability of student $j$ beating student $k$ with student $i$ grading the matchup is:
 
 $$P(i : j > k) = \frac{1}{1+e^{-g_{i}(w_{j} - w_{k})}} \text{ where } g_{i} = aw_{i} + b$$
 
@@ -463,25 +546,25 @@ Where $a$ and $b$ are parameters that determine the relationship between student
 We can now apply the same steps as the BTL model to obtain a ranking $\preceq_{t'}$.
 
 $$\mathcal{L}(\theta, a, b) = \sum_{(i,j,k) \in A'} -\ln(1 + e^{(aw_{i} + b)(w_{j} - w_{k})})$$
-$$\hat{\theta} = \argmax_{\theta \in \Theta, a,b \in \mathbb{R}} \mathcal{L}(\theta)$$
+$$\hat{\theta}, a, b = \argmax_{\theta \in \Theta, a,b \in \mathbb{R}} \mathcal{L}(\theta, a, b)$$
 $$a \preceq_{t'} b \text{ iff } w_{a}^{\hat{\theta}} \leq w_{b}^{\hat{\theta}}$$
 
 # Iterative Ranking
 
-In the first method we distribute all the matchups at once, obtain the entire tournament $A'$ and perform our ranking methods. What if instead we incrementally built up $A'$ in stages and used the incomplete information to distribute matchups in such a way that maximises information.
+In non-iterative ranking we distribute all the matchups at once then obtain the entire tournament $A'$ and perform our ranking methods.
+
+What if instead we incrementally built up $A'$ in stages and used the incomplete information to distribute matchups. This would allow us to choose to allocate matchup in a way to gives us more information compared to the non-iterative version.
 
 Here I'll outline the basic steps of our iterative matchup distribution algorithm. 
 
-1. Distribute the a set of matchups. Each student will be given 1 matchup to mark. If this is the first pass, use the non-iterative matchup distribution algorithm. Otherwise, use the Iterative version.
+1. Distribute one matchup to each student. If this is the first pass, then use the non-iterative matchup distribution algorithm. Otherwise, use the Iterative version.
 2. Rank the students using one of the ranking methods E.g. RBTL, Kemeny...
 3. Calculate a score for the skill of the student, based on the ranking.
 4. For the next set of matchups, calculate an uncertainty score for each matchup.
-5. Pair up the most skilled players with the most uncertain matchups, while keeping the other constraints in play.
+5. Allocate the more uncertain matchups to the more skilled players, while keeping the other constraints intact.
 6. Until we've distributed the desired amount of matchups, return to step 1.
 
-One thing to note is that in the first pass, we need to produce a ranking with only $n$ matchups, where $n$ is the number of students. 
-
-However in order to obtain a ranking of the students we need every student to be represented in this set of matchups. If we didn't have this, then we wouldn't have any information on students that weren't included.
+One thing to note is that in the first pass, we need to produce a ranking with only $n$ matchups, where $n$ is the number of students. We need every student to be represented in this set of matchups. If we didn't have this, then we wouldn't have any information on students that weren't included in the set of matchups.
 
 This will correspond to a graph (the set of matchups in step 1) in which every node has at least one edge. Another property we'll want is for it to be connected. This would mean that there are no isolated subgraphs where we can't get an effective comparison to the main cohort. We'll talk about the generation of this graph in a later section.
 
@@ -499,7 +582,7 @@ For uncertainty $u$ we could define it like this:
 
 $$u_{a,b} = \frac{|idx_{\prec_{t'}}(a) - idx_{\prec_{t'}}(b)|}{n}$$
 
-This ensures that matchups that are close together (even matches) have a uncertainty score, and matchups that are far apart (one-sided matches) are given a high uncertainty score.
+This ensures that matchups that are close together (even matches) have a high uncertainty score, and matchups that are far apart (one-sided matches) are given a low uncertainty score.
 
 ## The iterative matchup distribution ILP model
 
@@ -519,11 +602,11 @@ $$\forall (j,k) \in E, \quad \sum_{v \in V} X_{v,j,k} = 1$$
 
 For the objective function we'll want the best players to be assigned the most uncertain matchups.
 
-$|w - u|$ will contain the distance between the skill and uncertainty. By minimising this number we'll be assigning the best players to the most uncertain matches.
+The expression $|w - u|$ represents the distance between player skill and matchup uncertainty. By minimizing this distance, we can assign the best players to the matchups with the most uncertainty. The justification for this is that uncertain matchups generally contain more information than certain matchups. By getting a better read on the uncertain matches, we can obtain more accurate rankings.
 
 $$\text{ minimise} \sum_{(i,j,k) \in A} X_{i,j,k} \cdot |w_{i} - u_{j,k}|$$
 
-One thing to note is that each time this is ran, it'll have no memory of the previous passes. Therefore, it may give out duplicate assignments. In order to avoid this, we'll store all previous assignments and prevent those decision variables from being created.
+Each time this is ran, it'll have no memory of the previous passes. Therefore, it may give out duplicate assignments. In order to avoid this, we'll store all previous assignments and prevent those decision variables from being created.
 
 ### Side note: Brute force solution 
 
@@ -636,22 +719,20 @@ For the non-iterative algorithm we want to generate a graph $G = (V, E), \, A \s
 
 We want to 
 
-1. Control the number of nodes.
-2. Control the number of edges.
+1. Choose the number of nodes.
+2. Choose the number of edges.
 3. Have it be connected.
-4. Keep the degrees of each node relatively equal.
+4. Keep the degrees of each node equal.
 
 Condition 1 is necessary because we want have a graph that includes every student.
 
 Condition 2 is there because we want to be able to control the number of papers each student has to mark. 
 
-Condition 3 is required to enusre that we don't have isolated subgraphs where we can't compare students to the main cohort.
+Condition 3 is required to ensure that we don't have isolated subgraphs where we can't compare students to the main cohort.
 
 Condition 4 is needed to ensure the information gleamed from each student isn't unbalanced.
 
-One method that fulfils 3 of these conditions is to generate a connected $k$-regular graph.
-
-### Connected $k$-regular graph generation 
+### Method 1 - Regular Graphs
 
 A $k$-regular graph is a graph in which every node has the same number of neighbours. 
 
@@ -662,7 +743,9 @@ An algorithm to generate a $k$-regular graph is as follows:
 
 1. Lay out all your nodes in a circle
 2. If $k = 2m$ is even, then connect each node to it's nearest $m$ neighbours
-3. else if  $k = 2m + 1$ is odd, then connect each node to it's nearest $m$ neighbours and it's opposite vertex.
+3. else if $k = 2m + 1$ is odd, then connect each node to it's nearest $m$ neighbours and it's opposite vertex.
+
+If $k$ is odd and $nk$ must be even, then when $k$ is odd, $n$ must be even. The opposite vertex only exists when $n$ is even.
 
 ![](./figures/kreg_odd.svg){width=50%}
 ![](./figures/kreg_even.svg){width=50%}
@@ -670,12 +753,45 @@ An algorithm to generate a $k$-regular graph is as follows:
 \caption{$k=3, n=6$ on the left, $k=4, n=6$ on the right}
 \end{figure}
 
-
 If $k \geq 2$, then for each node will be connected to it's nearest 2 neighbours. Therefore for every graph where $k \geq 2$ generated with this method will have a cycle as a subgraph, and will be connected, satisfying condition 3.
 
 Condition 4 is fulfilled, since every node has the same degree and condition 1 is easy since we can just choose $n$.
 
-Condition 2 is a bit tricky. Every $k$-regular graph has $nk/2$ edges. Since $|E| = nk/2$, if we have $n$ students and we want $n k_{1} < r < n k_{2}$ edges, then it's impossible. $|E|$ must be a multiple of $k/2$.
+Condition 2 is a bit tricky. $|E|$, the number of edges is bounded by $2 \geq |E| \geq \frac{1}{2} n(n - 1)$ because it must greater than 2 to be connected. Also the complete graph, is a $k$-regular graph, where $k = n - 1$. So on this front it's fine.
+
+However, every $k$-regular graph has $nk/2$ edges. Since $|E| = nk/2$, we cannot have $r$ edges, where $k_{1} < r < k_{2}$ and $k_{1}, k_{2}$ are multiples of $n/2$. $|E|$ must be a multiple of $k/2$ which limits our control.
+
+For example, given the graph $k=3, n=6, |E|=9$, and the graph $k=4, n=6, |E|=12$. We can see that $9 < |E| < 12$ is impossible while keeping $n$ fixed.
+
+Therefore, we find that conditions 2 and 4 are incompatible. We'll want to keep condition 2, but perhaps we can relax condition 4.
+
+### Method 2 - Iterative Graph building
+
+We can use a method similar to the first one.
+
+1. Lay out our nodes in a circle. 
+2. Label each node from $1 \dots n$. 
+3. Connect each node to their neighbour. At this point node $1$ should be connected to $2$ and $n$, $2$ to $3$ and $1$...
+4. Set the variable $c$ to 2, set the variable $v$ to 1
+5. Check if the number of edges has been achieved, if so terminate and return the graph.
+6. Otherwise, connect node $v$ to node $v + c \mod n$
+7. Set $v$ to $(v + 1) \mod n$.
+8. If $v = n$, then set $c$ to $c + 1$.
+9. Go to step 5.
+
+![$n=9$ after 13 iterations, $|E| = 22$](./figures/method2.svg){width=70mm}
+
+This fufills conditions 1 and 2 since we can provide the number of nodes and edges as input to this function. (As long as $|E| \geq |V|$).
+
+Condition 3 is satisified in step 3 as it creates a cycle which is connected.
+
+For condition 4, it doesn't work. For example, if $k=9$, and we've done 13 iterations, we can see that $deg(4) = 6,\, deg(8) = 4$. 
+
+The 2 nodes have differing degrees. However, the difference between the maximum and the minimum degree is bounded by 2 no matter when we stop adding edges.
+
+This is because at every $n$ iterations of our algorithm we can only create 2 new edges for every node. 
+
+One thing to note is that after $\frac{n(n-1)}{2} - n$ iterations we arrive at the complete graph. Therfore, we need to add a condition in step 5 to check if there are no more edges to add, if so, then we terminate and return.
 
 ### Iterative
 
