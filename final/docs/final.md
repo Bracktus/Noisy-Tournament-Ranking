@@ -3,12 +3,11 @@ title: "Implementing a system for tournament peer grading"
 author: 
     - "Author: Ricky Chu"
     - "Supervisor: Richard Booth"
-geometry:
-    - margin=30mm
 header-includes:
   - \usepackage[ruled,vlined,linesnumbered]{algorithm2e}
   - \newcommand{\argmax}{\mathop{\mathrm{argmax}}\limits}
   - \newcommand{\argmin}{\mathop{\mathrm{argmin}}\limits}
+geometry: margin=30mm
 ---
 
 # Mathematical formulation of the problem:
@@ -76,7 +75,7 @@ $$ b \preceq_{t} d \preceq_{t} a \preceq_{t} c $$
 
 ![Visualisation of $A$. The colours denote the players.](./figures/fig1.svg){width=80mm}
 
-## Closeness?
+## Closeness - Kendall Tau distance
 
 In order to measure closeness between 2 preorders we'll need a distance metric. One common metric is the Kendall tau distance. This measures the number of differing pairs in the 2 preorders.
 
@@ -332,7 +331,7 @@ The ranking would be $\{b, d, e\} \preceq_{t'} a \preceq_{t'} c$.
 
 With a low number of students ties are common, as we increase the size of $V$, we encounter ties less often. In practice, we would pick an arbitrary ordering of the tied students.
 
-![A visualisation of $A'$. You can also calculate $Borda(n)$ by calculating $outdegree(n) - indegree(n)$](./figures/fig3.svg){width=60mm}
+![A visualisation of $A'$. You can also calculate $Borda(n)$ by calculating $outdegree(n) - indegree(n)$](./figures/fig3.svg){width=55mm}
 
 ## Weighted Borda Count 
 
@@ -548,6 +547,28 @@ $$\mathcal{L}(\theta, a, b) = \sum_{(i,j,k) \in A'} -\ln(1 + e^{(aw_{i} + b)(w_{
 $$\hat{\theta}, a, b = \argmax_{\theta \in \Theta, a,b \in \mathbb{R}} \mathcal{L}(\theta, a, b)$$
 $$a \preceq_{t'} b \text{ iff } w_{a}^{\hat{\theta}} \leq w_{b}^{\hat{\theta}}$$
 
+### Example:
+$$
+A' = \{(a, c, e), (a, b, d),
+       (b, a, e), (b, c, d),
+       (c, a, b), (c, d, e),
+       (d, c, a), (d, e, b),
+       (e, a, d), (e, c, b)
+       \}
+$$
+
+$$
+\begin{aligned}
+\hat{\theta}, a, b =& \argmax_{\theta \in \Theta, a,b \in \mathbb{R}} \mathcal{L}(\theta, a, b) \\
+=& \argmax_{\theta \in \Theta, a,b \in \mathbb{R}} \sum_{(i,j,k) \in A'} -\ln(1 + e^{(aw_{i} + b)(w_{j} - w_{k})}) \\
+=& \argmax_{\theta \in \Theta, a,b \in \mathbb(R)} \, [-\ln(1 + e^{(aw_{a} + b)(w_{c} - w_{e})})] + \dots + [-\ln(1 + e^{(aw_{e} + b)(w_{c} - w_{b})})] \\
+=& (w_{a}, w_{b}, w_{c}, w_{d}, w_{e}), a, b \\
+=& (306.22273, -0.57752, 579.14163, -0.57762, -0.57768),\, 463.81223039, \, 267.98774111
+\end{aligned}
+$$
+
+$$e \preceq_{t'} b \preceq_{t'} d \preceq_{t'} a \preceq_{t'} c$$
+
 # Iterative Ranking
 
 In non-iterative ranking, we distribute all the matchups at once then obtain the entire tournament $A'$ and perform our ranking methods.
@@ -567,7 +588,7 @@ One thing to note is that in the first pass, we need to produce a ranking with o
 
 This will correspond to a graph (the set of matchups in step 1) in which every node has at least one edge. Another property we'll want is for it to be connected. This would mean that there are no isolated subgraphs where we can't get an effective comparison to the main cohort. We'll talk about the generation of this graph in a later section.
 
-![An unconnected graph in which we can't compare $a$, $b$, $c$ to the main cohort](./figures/fig2.svg){width=50mm}
+![An unconnected graph in which we can't compare $a$, $b$, $c$ to the main cohort](./figures/fig2.svg){width=65mm}
 
 ## Skill and uncertainty
 
@@ -676,7 +697,8 @@ define simulated_annealing(TL, TI, C, S, neigh, init_sol, obj) {
                 # so we make less uphill moves over time
                 q = random(0,1)
                 p = e^(-cost_diff/temp)
-                if q < p {
+                if q < p 
+                {
                     curr_sol = temp_sol
                 }
            }
@@ -828,7 +850,7 @@ To do this we'll perform the following steps:
 
 1. Give every student $v$ a random score based on a normal distribution, $\mu = 0.5, \sigma = 0.25$. This score will be clamped into the range $[0, 1]$. Let's call this score $t(v)$.
 2. For every assignent in $A'$ generate a random number $r$ in the range $[0, 1]$.
-3. Check if $g(v) > r$. Where $g = f \circ t, f: [0, 1] \rightarrow [0, 1]$. This is the grading skill of the player. $f$ is a mapping from test score to grading skill. 
+3. Check if $g(v) > r$. Where $g = f \circ t, \, f: [0, 1] \rightarrow [0, 1]$. This is the grading skill of the player. $f$ is a mapping from test score to grading skill. 
 4. If so, then the student marks the matchup correctly, otherwise, the student marks the matchup incorrectly. Add this result to the set $A'$.
 
 ### Issues, my approach and alternative approaches
@@ -859,3 +881,5 @@ Ideally, we would like a different function $f$ with the same properties:
 However, I'll leave this up to future work.
 
 # Evaluation
+
+
