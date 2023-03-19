@@ -347,7 +347,7 @@ In other words, it's the number of students that student $a$ strictly beats (no 
 
 Now for each student $v$ we can calculate a weight $w_{v}$.
 
-$$w_{v} = \frac{idx_{\prec_{t'}}(v)}{n}$$
+$$w_{v} = \frac{idx_{\preceq_{t'}}(v)}{n}$$
 
 The rationale behind this is that higher scoring students are likely to be better graders. We divide by $n$ so that the weights are in the range $[0,1]$.
 
@@ -596,11 +596,11 @@ In steps 3 and 4 we estimate skill for players and uncertainty for matchups base
 
 For skill $w$ we can reuse the definition from the weighted borda count.
 
-$$w_{v} = \frac{n - idx_{\prec_{t'}}(v)}{n}$$
+$$w_{v} = \frac{idx_{\preceq_{t'}}(v)}{n}$$
 
 For uncertainty $u$ we could define it like this:
 
-$$u_{a,b} = \frac{|idx_{\prec_{t'}}(a) - idx_{\prec_{t'}}(b)|}{n}$$
+$$u_{a,b} = \frac{|idx_{\preceq_{t'}}(a) - idx_{\preceq_{t'}}(b)|}{n}$$
 
 This ensures that matchups that are close together (even matches) have a high uncertainty score, and matchups that are far apart (one-sided matches) are given a low uncertainty score.
 
@@ -625,6 +625,8 @@ For the objective function, we'll want the best players to be assigned the most 
 The expression $|w - u|$ represents the distance between player skill and matchup uncertainty. By minimizing this distance, we can assign the best players to the matchups with the most uncertainty. The justification for this is that uncertain matchups generally contain more information than certain matchups. By getting a better read on the uncertain matches, we can obtain more accurate rankings.
 
 $$\text{ minimise} \sum_{(i,j,k) \in A} X_{i,j,k} \cdot |w_{i} - u_{j,k}|$$
+
+If $\forall j,k \in V, (j,k) \in \preceq_{t'} \wedge \, (k,j) \in \preceq_{t'}$ (everybody is tied), then this becomes equivalent to the non iterative ILP but without the matchup concentration condition.
 
 Each time this is run, it'll have no memory of the previous passes. Therefore, it may give out duplicate assignments. To avoid this, we'll store all previous assignments and prevent those decision variables from being created.
 
