@@ -527,7 +527,6 @@ $$
 =& \argmax_{\theta \in \Theta} \, [-\ln(1 + e^{-(w_{c} - w_{e})})] + \dots + [-\ln(1 + e^{-w_{c} - w_{b}})] \\
 =& (w_{a}, w_{b}, w_{c}, w_{d}, w_{e}) \\
 =& (5.65199411, -6.81344253, 17.28832547, -6.81344251, -6.81344256)
- \\
 \end{aligned}
 $$
 
@@ -831,45 +830,34 @@ To do this we'll perform the following steps:
 
 1. Give every student $v$ a random score based on a normal distribution, $\mu = 0.5, \sigma = 0.25$. This score will be clamped into the range $[0, 1]$. Let's call this score $t(v)$.
 2. For every assignent in $A'$ generate a random number $r$ in the range $[0, 1]$.
-3. Check if $g(v) > r$. Where $g: [0, 1] \rightarrow [0, 1]$ is a function of $t(v)$ that maps grading skill to the probability of marking a matchup correctly.
+3. Check if $g(v) > r$. Where $g = f \circ t, f: [0, 1] \rightarrow [0, 1]$. This is the grading skill of the player. $f$ is a mapping from test score to grading skill. 
 4. If so, then the student marks the matchup correctly, otherwise, the student marks the matchup incorrectly. Add this result to the set $A'$.
 
-### Issues and alternative approaches
+### Issues, my approach and alternative approaches
 
-This method of data generation is very simplistic. For starters, we only take into account the grader's skill when marking. When in fact there is a multitude of factors that would influence the accuracy of the student's grading. 
+This method of data generation is very simplistic. For starters, we only take into account the grader's skill when marking. When in fact there is a multitude of factors that would influence the accuracy of the student's grading. The difference in skill between the 2 students they are judging should influence their decision since a large gap in skill should make the judgement easier. Also, just because a student has a high score on the test, it doesn't mean that they would make a good grader. 
 
-The difference in skill between the 2 students they are judging should influence their decision since a large gap in skill should make the judgement easier. Also, just because a student has a high score on the test, it doesn't mean that they would make a good grader. 
+Let's think about a multiple choice test. If a student who knows exactly 0% of the answers is given 2 papers to mark, then he will have a 50% chance of choosing the correct paper. However, this isn't necessarily true if the student is either malicious or if the student believes their incorrect answers to be correct. In these cases, the probability of the student choosing the correct paper is less than 50%.
 
-There's also the matter of $g$. How should we define it? In the RBLT model, we've defined it as a linear function of the grader's skill, $a \cdot w_{v} + b$. But we still haven't defined the weights $a$ and $b$.
+Let's take a different scenario. A paper in political science, while there are correct answers, often the quality of a paper is subjective. In these cases, it's difficult to conclude that grading skill is a function of academic skill since reading and writing are two distinct skills.
+
+Clearly, there are different formats of tests and other models of marking behaviour. But for now let's take the multiple choice format, and the case where players aren't malicious or overly confident in incorrect answers. Let's also make the assumption that players with a perfect score will choose the best paper every time. With these assumptions, we can change $f$'s co-domain. $f: [0, 1] \rightarrow [0.5, 1]$. One function that fits this is $f(x) = 0.5 \cdot x + 0.5$. This is the approach I've taken.
+
+Another, more accurate, approach would be to make $f$ a function of 3 values. The test score $t(v)$, and the scores of the two competing students, $t(a), \, t(b)$. $f : [0, 1]^3  \rightarrow [0, 1]$. This is the approach they take in the RBTL model. If we recall, in the RBTL model the probability of student $i$ marking $j$ over $k$ is:
+
+$$P(i : j > k) = \frac{1}{1+e^{-g_{i}(w_{j} - w_{k})}} \text{ where } g_{i} = aw_{i} + b$$
+
+If we take $w_{v} = t(v)$, then we get our function $f$:
+
+$$f(v, a, b) = \frac{1}{1+e^{-(0.5 \cdot t(v) + 0.5)(t(a) - t(b))}}$$
+
+The issue with this is that, if we generate data with this, then clearly RBTL will perform much better than the other ranking methods since the data was generated with the RBTL's probability function. This means that the comparisons will not be accurate.
+
+Ideally, we would like a different function $f$ with the same properties:
+
+- Takes into account grader $v$'s skill
+- Takes into account difference between student $a$ and student $b$'s skill
+
+However, I'll leave this up to future work.
 
 # Evaluation
-
-# TODO: Synthetic data generation of $A'$/Something to think about
-
-In our first model of grading, we assumed that marking skill was a function of player skill.
-Specifically grading\_skill = 0.5 * player\_skill + 0.5
-This is a mapping from [0, 1] to [0.5, 1]. This assumes that players with a score of 0 are purely guessing.
-
-However, let's take a maths exam. If a player got 0% on the exam, and was 100% confident in their answers, and each question was multiple choice. Then they would always mark the matchup incorrectly. In this case grading\_skill = player\_skill.
-
-But what about a non-objective marking. For example a history essay. In this case would we keep the same model? Would the student guess?
-
-Also would a student who got 0% on a maths exam be 100% confident on their paper?
-
-Maybe we could have some sort of in-between? I.e. mapping [0 - 1] to [0.2 - 1]?
-
-Given (A, B, C). Could the probability depend on the difference between B's and C's score?
-
-Actually, we already have a probablility function P(C: A > B). that we define in the paper! Is it cheating if we use it though? It feels like we're giving an unfair advantage to RBTL in that case since the model exactly fits the dataset.
-
-## Ideas for turning it into a website?
-
-Little about section with explanation + link to repo + paper 
-
-Main section will have 2 options:
-
-- Full thing w/ paper distribution
-- Little DSL that lets you input pairs and gives you a ranking approximation
-
-HTMX for the frontend.
-FastAPI for the backed.
