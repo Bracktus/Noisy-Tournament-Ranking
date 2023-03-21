@@ -42,7 +42,7 @@ $A'$ is similar to $A$ but the ordering of the pairs matter. In other words, it 
 
 For example, the triplet $(v_{i}, v_{j}, v_{k})$ means that the student determined that $v_{j}$'s paper was better than $v_{k}$'s paper, whereas the triplet $(v_{i}, v_{k}, v_{j})$ means that the student determined that $v_{k}$'s paper was better than $v_{j}$'s paper.
 
-The correct assessment would be $(v_{i}, v_{j}, v_{k}) \text{ iff } t(v_{j}) \geq t(v_{k})$
+The correct assessment would be $(v_{i}, v_{j}, v_{k}) \text{ iff } t(v_{j}) \geq t(v_{k})$. It's possible that 2 students are equal in skill, but the evaluating student would not be able to declare a draw.
 
 ## Our problem is as follows:
 
@@ -71,13 +71,13 @@ $$
 \end{aligned}
 $$
 
-$$ b \preceq_{t} d \preceq_{t} a \preceq_{t} c $$
+$$ b \prec_{t} d \prec_{t} a \prec_{t} c $$
 
 ![Visualisation of $A$. The colours denote the players.](./figures/fig1.svg){width=80mm}
 
 ## Closeness - Kendall Tau distance
 
-In order to measure closeness between 2 preorders we'll need a distance metric. One common metric is the Kendall tau distance. This measures the number of differing pairs in the 2 preorders.
+In order to measure closeness between 2 total preorders we'll need a distance metric. One common metric is the Kendall tau distance. This measures the number of differing pairs in the 2 total preorders.
 
 For example let's take the relations $\preceq_{t}$ and $\preceq_{t'}$ over $V = \{a, b, c, d\}$
 
@@ -89,7 +89,7 @@ $$\preceq_{t'} = \{(c,b),(c,a),(c,d),(b,a),(b,d),(a,d),(a,a),(b,b),(c,c),(d,d)\}
 
 The set of differing pairs is
 
-$$\preceq_{t} \setminus \preceq_{t'} = \{(b,c), (d,a), (d,c), (a,c)\}$$
+$$\precq_{t} \setminus \preceq_{t'} = \{(b,c), (d,a), (d,c), (a,c)\}$$
 
 So the Kendall Tau distance is 
 $$K_{d}(\preceq_{t}, \preceq_{t'}) = |\preceq_{t} \setminus \preceq_{t}| = 4 $$
@@ -102,6 +102,8 @@ Therefore, the normalised Kendall tau distance $K_{n}$ is
 
 $$K_{n} = \frac{K_{d}}{\frac{n(n-1)}{2}} = \frac{2K_{d}}{n(n - 1)}$$
 
+The reason for normalisation is to allow for comparisons between runs where $n$ differs. The kendall tau distance for a large $n$ with $k$ differing pairs should be lower than the kendall tau distance for a small $n$ with $k$ difffering pairs.
+
 # Choosing $A$ and $A'$
 
 ## Additional restrictions on $A$
@@ -109,19 +111,14 @@ $$K_{n} = \frac{K_{d}}{\frac{n(n-1)}{2}} = \frac{2K_{d}}{n(n - 1)}$$
 If we're in charge of the matchup assignments then there are certain properties that we would like to satisfy. 
 
 1. Each student does not mark their own paper.
-2. Avoid giving a grader too many of a single student's matchups.
-3. Keep the workload of each student fairly even.
-4. We obtain a baseline amount of 'information' about each player.
+2. Keep the workload of each student fairly even.
+3. We obtain a baseline amount of 'information' about each player.
 
 ### Condition 1\. 
 
 This is already handled by the definition of $A$.
 
 ### Condition 2\. 
-
-Let's say player 2 is assigned the matchups: (1,3), (3, 5), (3, 4) and (6, 3). In this case, a lot of player 3's matches are concentrated in player 2's hands. If player 2 is a poor student then we will not have much useful information to infer player 3's skill.
-
-### Condition 3\. 
 
 If player 1 is assigned the matchups: 
 
@@ -136,11 +133,11 @@ and player 2 is assigned the matchups
 
 Then player 2 is marking a lot more matchups than player 1 which is an unfair workload.
 
-### Condition 4\. 
+### Condition 3\. 
 
-If we assume the information on a student $v$ to be a measure of how many good graders have marked their matchup it becomes difficult to satisfy this. After all, how can we identify the good graders before we've ranked the students?
+If we assume the information on a student $v$ to be a measure of how many good graders have marked their matchup it becomes difficult to satisfy this. After all, how can we identify the good graders before we've ranked the students? If we take the grading skill out of the equation, then we can measure this by the number of times student $v$ appears in $E$. Taking this, we can satisfy this condition by constructing $E$ such that each student appears in $E$ a roughly equal amount of times.
 
-If we take the grading skill out of the equation, then we can measure this by the number of times student $v$ appears in $E$. Taking this, we can satisfy this condition by constructing $E$ such that each student appears in $E$ a roughly equal amount of times.
+There's also the group of students that mark the papers of a select student. Let's say player 2 is assigned the matchups: (1,3), (3, 5), (3, 4) and (6, 3). In this case, a lot of player 3's matches are concentrated in player 2's hands. If player 2 is a poor student then we will not have much useful information to infer player 3's skill.
 
 To solve this problem of matchup assignments we can turn to an Integer Linear Programming model.
 
@@ -162,7 +159,7 @@ Let's define a function $f(v)$. This takes in a student $v$ and returns the sum 
 
 $$f(v) = \sum_{(j, k) \in E} X_{v, j, k}$$
 
-To satisfy condition 3 we can add the following constraint. For every pair of students, the number of matchups assigned to them cannot differ by more than 1[^1]. 
+To satisfy condition 2 we can add the following constraint. For every pair of students, the number of matchups assigned to them cannot differ by more than 1[^1]. 
 
 [^1]: We don't set it equal to 0. This is because for many graphs it'll be infeasible. In fact, for any graph where $|V| \mod |E| \neq 0$ it's infeasible.
 
@@ -180,7 +177,7 @@ Let's define a function $s(a, b)$. This takes in 2 students $a, b$, and returns 
 
 $$s(a,b) = \sum_{v \in V} X_{a, b, v} + X_{a, v, b}$$
 
-We can now define our objective function. This corresponds to condition 2 which avoids concentrating all of player $b$'s matches in the hands of player $a$.
+We can now define our objective function. This corresponds to part of condition 3 which avoids concentrating all of player $b$'s matches in the hands of player $a$.
 
 $$\text{minimise }  max(\{s(a,b) | (a, b) \in V \times V, a \neq b\})$$
 
@@ -234,8 +231,9 @@ Now we can give these assignments to our students and obtain $A'$.
 
 Now that we've obtained a set of assignments we can now get to work on defining our ranking relation $\preceq_{t'}$.
 
-I've implemented 5 different methods of ranking:
+I've implemented 6 different methods of ranking:
 
+- Win Count
 - Borda Count 
 - Weighted Borda Count
 - Kemeny Score
@@ -548,6 +546,7 @@ $$\hat{\theta}, a, b = \argmax_{\theta \in \Theta, a,b \in \mathbb{R}} \mathcal{
 $$a \preceq_{t'} b \text{ iff } w_{a}^{\hat{\theta}} \leq w_{b}^{\hat{\theta}}$$
 
 ### Example:
+
 $$
 A' = \{(a, c, e), (a, b, d),
        (b, a, e), (b, c, d),
@@ -567,7 +566,7 @@ $$
 \end{aligned}
 $$
 
-$$e \preceq_{t'} b \preceq_{t'} d \preceq_{t'} a \preceq_{t'} c$$
+$$e \preceq_{t'} d \preceq_{t'} b \preceq_{t'} a \preceq_{t'} c$$
 
 # Iterative Ranking
 
@@ -632,7 +631,7 @@ Each time this is run, it'll have no memory of the previous passes. Therefore, i
 
 ### Side note: Brute force solution 
 
-A cycle graph has a simple structure. A valid assignment over the graph, without taking into account conditions 2, 3 and 4 from ['Additional restrictions on $A$'](#Additional restrictions on $A$), is a graph in which each edge is labelled. 
+A cycle graph has a simple structure. A valid assignment over the graph, without taking into account conditions 2 and 3 from ['Additional restrictions on $A$'](#Additional restrictions on $A$), is a graph in which each edge is labelled. 
 
 The set of labels is the same as the set of vertices $V$. Each label must be used once, and if an edge is incident to a vertex $v$, then the edge cannot be labelled with $v$.
 
