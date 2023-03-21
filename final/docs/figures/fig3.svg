@@ -23,8 +23,8 @@
 <!-- a&#45;&gt;b -->
 <g id="edge1" class="edge">
 <title>a&#45;&gt;b</title>
-<path fill="none" stroke="yellow" d="M53.98,-118.55C98.88,-114.42 189.09,-106.13 240.65,-101.4"/>
-<polygon fill="yellow" stroke="yellow" points="240.81,-104.9 250.44,-100.5 240.17,-97.93 240.81,-104.9"/>
+<path fill="none" stroke="sienna" d="M53.98,-118.55C98.88,-114.42 189.09,-106.13 240.65,-101.4"/>
+<polygon fill="sienna" stroke="sienna" points="240.81,-104.9 250.44,-100.5 240.17,-97.93 240.81,-104.9"/>
 </g>
 <!-- d -->
 <g id="node4" class="node">
@@ -59,7 +59,7 @@
 <!-- c -->
 <g id="node3" class="node">
 <title>c</title>
-<ellipse fill="none" stroke="yellow" cx="144.4" cy="-18" rx="27" ry="18"/>
+<ellipse fill="none" stroke="sienna" cx="144.4" cy="-18" rx="27" ry="18"/>
 <text text-anchor="middle" x="144.4" y="-14.3" font-family="Times,serif" font-size="14.00">c</text>
 </g>
 <!-- c&#45;&gt;a -->
@@ -89,8 +89,8 @@
 <!-- d&#45;&gt;e -->
 <g id="edge9" class="edge">
 <title>d&#45;&gt;e</title>
-<path fill="none" stroke="yellow" d="M115.73,-262.35C140.6,-259.93 177.73,-256.33 205.65,-253.62"/>
-<polygon fill="yellow" stroke="yellow" points="205.87,-257.11 215.48,-252.66 205.19,-250.15 205.87,-257.11"/>
+<path fill="none" stroke="sienna" d="M115.73,-262.35C140.6,-259.93 177.73,-256.33 205.65,-253.62"/>
+<polygon fill="sienna" stroke="sienna" points="205.87,-257.11 215.48,-252.66 205.19,-250.15 205.87,-257.11"/>
 </g>
 <!-- e&#45;&gt;b -->
 <g id="edge10" class="edge">
