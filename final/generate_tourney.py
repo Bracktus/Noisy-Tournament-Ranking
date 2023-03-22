@@ -26,7 +26,7 @@ class TournamentGenerator:
     def populate_iter_tournament(self, assignments):
         """
         For iterative tournaments we need to maintain state.
-        We'll store this state in self.iter_tourney. 
+        We'll store this state in self.iter_tourney.
         However before we run a second iterative tournament we need to run reset_iter_tourney.
         In order to prevent information leakage into the next tourney.
         """

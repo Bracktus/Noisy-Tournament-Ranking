@@ -36,7 +36,7 @@ class Classroom:
 
         del self.grades[self.num_students - 1]
         self.num_students -= 1
-        
+
     def get_student_score(self, student):
         return self.grades[student]
 

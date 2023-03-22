@@ -16,6 +16,7 @@ def random_cycle(n):
     graph.add(final_pair)
     return graph
 
+
 def fair_graph(n, e):
     """
     Iterative builds up a graph with n nodes and e edges.
@@ -47,8 +48,9 @@ def fair_graph(n, e):
             shift_val += 1
 
         edges += 1
-            
+
     return graph
+
 
 def random_connected_graph(n):
     """

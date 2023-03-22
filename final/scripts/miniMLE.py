@@ -6,13 +6,14 @@ results = {
     1: [(0, 4), (2, 3)],
     2: [(0, 1), (3, 4)],
     3: [(2, 0), (4, 1)],
-    4: [(0, 3), (2, 1)]
+    4: [(0, 3), (2, 1)],
 }
 
 res_flat = []
 for v in results:
     for t1, t2 in results[v]:
         res_flat.append((v, t1, t2))
+
 
 def _btl_obj_func(skill_levels, tournament):
     likelihood_f = np.array([])
@@ -22,6 +23,7 @@ def _btl_obj_func(skill_levels, tournament):
         likelihood_f = np.append(likelihood_f, p_jk)
 
     return np.sum(likelihood_f)
+
 
 def btl_mle(tournament, inital_guess=None):
     if inital_guess == None:
@@ -33,6 +35,7 @@ def btl_mle(tournament, inital_guess=None):
 
     ranking = minimize(f, inital_guess, bounds=bounds).x
     return ranking
+
 
 def _rbtl_obj_func(skill_levels, tournament):
     """
@@ -60,6 +63,7 @@ def _rbtl_obj_func(skill_levels, tournament):
 
     return np.sum(likelihood_f)
 
+
 def rbtl_mle(tournament, inital_guess=None):
     if inital_guess == None:
         inital_guess = [0.5 for _ in range(5)]
@@ -73,7 +77,7 @@ def rbtl_mle(tournament, inital_guess=None):
     ranking = list(ranking[2:])  # The first 2 values are a and b, we want the rest
     return ab, ranking
 
+
 ab, ranking = rbtl_mle(res_flat)
 print(ab)
 print(ranking)
-

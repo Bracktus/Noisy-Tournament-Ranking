@@ -3,13 +3,13 @@ from metrics import kendall_tau
 from rankers import rbtl, btl, kemeny, copeland
 from classroom import Classroom
 import distribute_papers as dp
-from graph_utils import connected_graph
+from graph_utils import fair_graph
 from generate_tourney import TournamentGenerator
 
 
 def main():
-    n = 15
-    papers = 3
+    n = 33
+    papers = 13
 
     classroom = Classroom(n, malicious=False)
     real = classroom.get_true_ranking()
@@ -24,7 +24,7 @@ def main():
     iter_ranking2 = run_iterative_tourney(n, papers - 1, copeland, tourney_generator)
     kt_s = kendall_tau(real, iter_ranking2)
 
-    pairs = connected_graph(n, papers)
+    pairs = fair_graph(n, papers * n)
     distributor = dp.PaperDistributor(n, pairs)
     assignments = distributor.get_solution()
     tourney = tourney_generator.generate_tournament(assignments)
@@ -40,7 +40,7 @@ def main():
     t4 = copeland(tourney)
     print(f"cope: {t4}")
 
-    print(f"The distance between the true ranking and the iter cope rbtl ranking is: {kt_s}")
+    print(f"The distance between the true ranking and the iter cope ranking is: {kt_s}")
     print(f"The distance between the true ranking and the iter rbtl ranking is: {kt0}")
     kt1 = kendall_tau(real, t1)
     print(f"The distance between the true ranking and the rbtl ranking is: {kt1}")
