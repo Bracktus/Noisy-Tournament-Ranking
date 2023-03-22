@@ -1,12 +1,12 @@
 digraph {
     a[label="a", color="red"]
     b[label="b", color="blue"]
-    c[label="c", color="yellow"]
+    c[label="c", color="sienna"]
     d[label="d", color="green"]
     e[label="e", color="purple"]
 
     edge [len=3]
-    a -> b[color="yellow"]
+    a -> b[color="sienna"]
     a -> d[color="purple"]
     a -> e[color="blue"]
 
@@ -17,7 +17,7 @@ digraph {
 
     b -> d[color="red"]
 
-    d -> e[color="yellow"]
+    d -> e[color="sienna"]
 
     e -> b[color="green"]
 }
