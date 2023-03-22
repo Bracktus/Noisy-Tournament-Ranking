@@ -23,25 +23,43 @@ We have all the students
 now we'll let you input the number of matchups you want each student to mark
 next we'll make a massive table of who marks who
 and give you a visualisation
+
+Task 3:
+Run the mip 
+print the assignments in a table
+preview the graph 
+
+Task 4:
+run the rankers
+show results in a plot
+
+Add user options
+
 """
 
 # from gui.test import test
 import dearpygui.dearpygui as dpg
 import graphviz
-from collections import namedtuple
 
 from classroom import Classroom
 from generate_tourney import TournamentGenerator
 from graph_utils import fair_graph
 import distribute_papers as dp
 
-
 # ------ GLOBAL STATE -------------------
 
 inital_num_students = 5
 classroom = Classroom(inital_num_students)
+nc2 = (inital_num_students * (inital_num_students - 1))/2
 pairs = None
 
+def get_img_tag():
+    num = 0
+    while True:
+        yield (f"img_{num - 1}", f"img_{num}")
+        num += 1
+tag_gen = get_img_tag()
+    
 #---------GLOBAL STATE END --------------
 
 #-------------------- CALLBACKS -------------------------
@@ -71,9 +89,11 @@ def set_classroom(_, app_data):
     edges = dpg.get_value("Edges Input")
     update_avg_workload(new_size, edges)
 
-    # TODO
-    # Dynamic max clamping of num edges. Complete graph should be ub
-
+    ub = new_size*(new_size-1)/2
+    lb = len(classroom)
+    clamp = lambda v: max(min(ub, v), lb)
+    dpg.set_value("Edges Input", clamp(edges))
+    dpg.configure_item("Edges Input", max_value=ub, min_value=lb)
 
 def update_avg_workload(num_students, edges):
     avg_workload = num_students/edges
@@ -88,7 +108,8 @@ def gen_graph():
     e = dpg.get_value("Edges Input")
     pairs = fair_graph(n, e)
     
-    dot = graphviz.Graph("Matchups", engine="neato")
+    dot = graphviz.Graph("Matchups", engine="circo")
+    dot.attr("node", shape="circle")
     for i in classroom.grades:
         dot.node(str(i), str(i))
 
@@ -98,23 +119,43 @@ def gen_graph():
     dot.format = "png"
     dot.render(directory="./temp/")
 
+    width, height, _, data = dpg.load_image("./temp/Matchups.gv.png")
 
-    width, height, channels, data = dpg.load_image("./temp/Matchups.gv.png")
 
-    if dpg.does_alias_exist("graph_img"):
-        dpg.delete_item("graph_img")
-        dpg.remove_alias("graph_img")
+    with dpg.window(
+            on_close=lambda sender: dpg.delete_item(sender),
+            label=f"Graph with {len(classroom)} students and {dpg.get_value('Edges Input')} matchups",
+            autosize=True):
+        old_tag, new_tag = next(tag_gen)
+        with dpg.texture_registry():
+            dpg.delete_item(old_tag)
+            dpg.add_static_texture(
+                width=width,
+                height=height,
+                default_value=data,
+                tag=new_tag
+            )
+        dpg.add_image(new_tag)
 
-    with dpg.texture_registry():
-            dpg.add_static_texture(width=width, height=height, default_value=data, tag="graph_img")
 
-    dpg.add_image("graph_img", parent="blah")
+    # Table Stuff
+    if dpg.does_alias_exist("Edge Table"):
+        dpg.delete_item("Edge Table")
 
+    with dpg.table(tag="Edge Table", parent="Matchup Group"):
+        dpg.add_table_column(label="First Student")
+        dpg.add_table_column(label="Second Student")
+        for i, (a, b) in enumerate(pairs):
+            with dpg.table_row(tag=f"Edge Table Row {i}"):
+                dpg.add_text(str(a))
+                dpg.add_text(str(b))
+                
+        
 # ----------------CALLBACKS END ------------------------
 
 dpg.create_context()
 
-with dpg.window(label="Classroom Generation", autosize=True) as primary_window:
+with dpg.window(label="Classroom Generation", autosize=True, pos=(0, 0)) as primary_window:
     dpg.add_input_int(
         label="Number of Students",
         default_value=inital_num_students,
@@ -133,11 +174,11 @@ with dpg.window(label="Classroom Generation", autosize=True) as primary_window:
                 dpg.add_text(str(classroom.grades[i]))
 
 
-with dpg.window(label="Matchup Generation", autosize=True) as secondary_window:
-    with dpg.group(tag="blah"): 
+with dpg.window(label="Matchup Generation", autosize=True, pos=(0, 300)) as secondary_window:
+    with dpg.group(tag="Matchup Group"): 
 
         dpg.add_input_int(
-            label="Number of Edges",
+            label="Number of Matchups",
             tag="Edges Input",
             default_value=inital_num_students,
             callback=lambda _, app_data: update_avg_workload(
@@ -145,7 +186,9 @@ with dpg.window(label="Matchup Generation", autosize=True) as secondary_window:
                     app_data
                 ),
             min_value=1,
+            max_value=int(nc2),
             min_clamped=True,
+            max_clamped=True,
             on_enter=True
         )
 
@@ -158,6 +201,12 @@ with dpg.window(label="Matchup Generation", autosize=True) as secondary_window:
             label="Generate graph - Preview",
             callback=gen_graph
         )
+
+# with dpg.window(label="Assignment", autosize=True, pos=(100, 0)) as tertiary_window:
+#     dpg.add
+    
+
+            
 
 dpg.create_viewport(title="Tournament Ranking")  
 dpg.setup_dearpygui()

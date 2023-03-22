@@ -23,7 +23,6 @@ def fair_graph(n, e):
     """
     # Create a cycle
     nodes = [i for i in range(n)]
-    shuffle(nodes)
     shifted = nodes[1:]
     graph = set()
     for pair in zip(nodes, shifted):
@@ -44,7 +43,7 @@ def fair_graph(n, e):
         graph.add(pair)
 
         node_idx = (node_idx + 1) % n
-        if node_idx == n - 1:
+        if node_idx == 0:
             shift_val += 1
 
         edges += 1
