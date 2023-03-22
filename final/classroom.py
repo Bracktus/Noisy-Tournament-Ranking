@@ -26,6 +26,17 @@ class Classroom:
 
         return prob
 
+    def add_student(self):
+        self.grades[self.num_students] = self._gen_score()
+        self.num_students += 1
+
+    def del_student(self):
+        if self.num_students == 1:
+            raise ValueError("Cannot create empty classroom")
+
+        del self.grades[self.num_students - 1]
+        self.num_students -= 1
+        
     def get_student_score(self, student):
         return self.grades[student]
 
@@ -43,3 +54,6 @@ class Classroom:
         true_ranking = sorted(true_ranking, key=lambda i: i[1], reverse=True)
         true_ranking = [student for (student, _) in true_ranking]
         return true_ranking
+
+    def __str__(self):
+        return str(self.grades)
