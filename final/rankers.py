@@ -13,22 +13,16 @@ def ranking_to_weights(ranking):
 
 def win_count(tournament):
     """
-    The copeland score of a student is:
-    The node's outdegree - the node's indegree
-    Optionally is weighted
+    The win_count score of a student is:
+    The node's outdegree 
     """
-    matchups = tournament.values()
-    matchups = [matchup for sublist in matchups for matchup in sublist]
-    copeland_scores = defaultdict(int)
+    num_students = len(tournament)
+    scores = {i : 0 for i in range(num_students)}
     for grader in tournament:
-        for match in matchups:
-            winner, loser = match
-            if grader == winner:
-                copeland_scores[grader] += 1
-            elif grader == loser:
-                copeland_scores[grader] -= 1
+        for winner, _ in tournament[grader]:
+            scores[winner] += 1
 
-    ranking = copeland_scores.items()
+    ranking = scores.items()
     ranking = sorted(ranking, key=lambda i: i[1], reverse=True)
     ranking = [student for (student, _) in ranking]
     return ranking
