@@ -11,23 +11,42 @@ def ranking_to_weights(ranking):
     return weights
 
 
-def copeland(tournament, weights=None):
+def win_count(tournament):
     """
     The copeland score of a student is:
-    The node's indegree - the node's outdegree
+    The node's outdegree - the node's indegree
     Optionally is weighted
     """
     matchups = tournament.values()
     matchups = [matchup for sublist in matchups for matchup in sublist]
     copeland_scores = defaultdict(int)
     for grader in tournament:
-        w = 1 if weights == None else weights[grader]
         for match in matchups:
             winner, loser = match
             if grader == winner:
-                copeland_scores[grader] += w
+                copeland_scores[grader] += 1
             elif grader == loser:
-                copeland_scores[grader] -= w
+                copeland_scores[grader] -= 1
+
+    ranking = copeland_scores.items()
+    ranking = sorted(ranking, key=lambda i: i[1], reverse=True)
+    ranking = [student for (student, _) in ranking]
+    return ranking
+
+
+def copeland(tournament, weights=None):
+    """
+    The copeland score of a student is:
+    The node's outdegree - the node's indegree
+    Optionally is weighted
+    """
+    copeland_scores = defaultdict(int)
+    for grader in tournament:
+        w = 1 if weights == None else weights[grader]
+        for match in tournament[grader]:
+            winner, loser = match
+            copeland_scores[winner] += w
+            copeland_scores[loser] -= w
 
     ranking = copeland_scores.items()
     ranking = sorted(ranking, key=lambda i: i[1], reverse=True)
