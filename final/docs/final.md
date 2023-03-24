@@ -18,7 +18,7 @@ $$V = \{v_{1}, v_{2}, v_{3} \dots v_{n}\}$$
 
 Let $E$ be the set of matchups.
 
-$(v_{a}, v_{b}) \in E$ means that student $v_{a}$'s paper is paired against player $v_{b}$'s paper.
+$(v_{a}, v_{b}) \in E$ means that student $v_{a}$'s paper is paired against player $v_{b}$'s paper. We call this a matchup.
 
 $$E \subset V \times V \text{ where } \forall (v_{a}, v_{b}) \in E, v_{a} \neq v_{b}$$ 
 
@@ -44,11 +44,13 @@ For example, the triplet $(v_{i}, v_{j}, v_{k})$ means that the student determin
 
 The correct assessment would be $(v_{i}, v_{j}, v_{k}) \text{ iff } t(v_{j}) \geq t(v_{k})$. It's possible that 2 students are equal in skill, but the evaluating student would not be able to declare a draw.
 
-## Our problem is as follows:
+## Problem Statement
 
-Given $V, E, A, A'$ find a relation $\preceq_{t'}$ such that the preorder defined by $\preceq_{t'}$ is 'close to' the preorder defined by $\preceq_{t}$.
+Given $V, E, A, A'$ find a relation $\preceq_{t'}$ such that the preorder defined by $\preceq_{t'}$ is 'close to' the preorder defined by $\preceq_{t}$. We will define this closeness metric in the evaluation section.
 
-## For example let's take 4 students
+Given $V$, we can also devise $E$ and $A$ to make the problem easier. This would correspond to the scenario where we have the completed papers from students, but have not decided on matchups or assignemnts yet.
+
+## Example 
 
 $$V = \{a, b, c, d\}$$
 
@@ -75,38 +77,101 @@ $$ b \prec_{t} d \prec_{t} a \prec_{t} c $$
 
 ![Visualisation of $A$. The colours denote the players.](./figures/fig1.svg){width=80mm}
 
-## Closeness - Kendall Tau distance
+## Solution overview
 
-In order to measure closeness between 2 total preorders we'll need a distance metric. One common metric is the Kendall tau distance. This measures the number of differing pairs in the 2 total preorders.
+To solve this problem I've broken it down into 6 steps. If we already have the set of marked matchups, then we can go ahead and skip to the ranking methods.
 
-For example let's take the relations $\preceq_{t}$ and $\preceq_{t'}$ over $V = \{a, b, c, d\}$
+1. If we already have $A'$, go to step 5
+2. Generate matchups (Create $E$)
+3. Assign matchups (Create $A$)
+4. Give matchups to students and ask them to mark (Obtain $A'$)
+5. Apply ranking method (Obtain $\preceq_{t'}$)
 
-$$ c \preceq_{t} a \preceq_{t} d \preceq_{t} b $$
-$$\preceq_{t} = \{(b,d),(b,a),(b,c),(d,a),(d,c),(a,c),(a,a),(b,b),(c,c),(d,d)\}$$
+# Generating Matchups - Creating $E$
 
-$$ d \preceq_{t'} a \preceq_{t'} b \preceq_{t'} c $$
-$$\preceq_{t'} = \{(c,b),(c,a),(c,d),(b,a),(b,d),(a,d),(a,a),(b,b),(c,c),(d,d)\}$$
+We want to generate a graph $G = (V, E)$
 
-The set of differing pairs is
+We want to 
 
-$$\preceq_{t} \setminus \preceq_{t'} = \{(b,c), (d,a), (d,c), (a,c)\}$$
+1. Choose the number of nodes.
+2. Choose the number of edges.
+3. Have it be connected.
+4. Keep the degrees of each node equal.
 
-So the Kendall Tau distance is 
-$$K_{d}(\preceq_{t}, \preceq_{t'}) = |\preceq_{t} \setminus \preceq_{t}| = 4 $$
+Condition 1 is necessary because we want to have a graph that includes every student.
 
-$$|\preceq_{t} \setminus \preceq_{t'}| = |\preceq_{t'} \setminus \preceq_{t}|$$
+Condition 2 is there because we want to be able to control the number of papers each student has to mark. 
 
-If we let $n$ be the number of items in our preorders, and the first preorder is the reverse of the second preorder, then $\frac{n(n-1)}{2}$ is the Kendall Tau distance between them. This corresponds to the situation where all the pairs are differing. Dividing by this number will bring the Kendall tau distance into the range $[0, 1]$.
+Condition 3 is required to ensure that we don't have isolated subgraphs where we can't compare students to the main cohort.
 
-Therefore, the normalised Kendall tau distance $K_{n}$ is
+Condition 4 is needed to ensure the information gleaned from each student isn't unbalanced.
 
-$$K_{n} = \frac{K_{d}}{\frac{n(n-1)}{2}} = \frac{2K_{d}}{n(n - 1)}$$
+## Method 1 - Regular Graphs
 
-The reason for normalisation is to allow for comparisons between runs where $n$ differs. The kendall tau distance for a large $n$ with $k$ differing pairs should be lower than the kendall tau distance for a small $n$ with $k$ difffering pairs.
+A $k$-regular graph is a graph in which every node has the same number of neighbours. 
 
-# Choosing $A$ and $A'$
+Given $n$ nodes, a $k$-regular graph only exists if $kn$ is even and $n \geq k + 1$. 
 
-## Additional restrictions on $A$
+<!-- https://math.stackexchange.com/questions/142112/how-to-construct-a-k-regular-graph -->
+An algorithm to generate a $k$-regular graph is as follows:
+
+1. Lay out all your nodes in a circle
+2. If $k = 2m$ is even, then connect each node to its nearest $m$ neighbours
+3. else if $k = 2m + 1$ is odd, then connect each node to its nearest $m$ neighbours and it's opposite vertex.
+
+If $k$ is odd and $nk$ must be even, then when $k$ is odd, $n$ must be even. The opposite vertex only exists when $n$ is even.
+
+![](./figures/kreg_odd.svg){width=50%}
+![](./figures/kreg_even.svg){width=50%}
+\begin{figure}[]
+\caption{$k=3, n=6$ on the left, $k=4, n=6$ on the right}
+\end{figure}
+
+If $k \geq 2$, then for each node, it will be connected to its nearest 2 neighbours. Therefore, every graph where $k \geq 2$ generated with this method will have a cycle as a subgraph and will be connected, satisfying condition 3.
+
+Condition 4 is fulfilled since every node has the same degree and condition 1 is easy since we can just choose $n$.
+
+Condition 2 is a bit tricky. $|E|$, the number of edges is bounded by $2 \geq |E| \geq \frac{1}{2} n(n - 1)$ because it must greater than 2 to be connected. Also, the complete graph is a $k$-regular graph, where $k = n - 1$. So on this front, it's fine.
+
+However, every $k$-regular graph has $nk/2$ edges. Since $|E| = nk/2$, we cannot have $r$ edges, where $k_{1} < r < k_{2}$ and $k_{1}, k_{2}$ are multiples of $n/2$. $|E|$ must be a multiple of $k/2$ which limits our control.
+
+For example, given the graph $k=3, n=6, |E|=9$, and the graph $k=4, n=6, |E|=12$. We can see that $9 < |E| < 12$ is impossible while keeping $n$ fixed.
+
+Therefore, we find that conditions 2 and 4 are incompatible. We'll want to keep condition 2, but perhaps we can relax condition 4.
+
+## Method 2 - Iterative Graph building
+
+We can use a method similar to the first one.
+
+1. Lay out our nodes in a circle. 
+2. Label each node from $1 \dots n$. 
+3. Connect each node to its neighbour. At this point node $1$ should be connected to node $2$ and node $n$, node $2$ to node $1$ and node $3$...
+4. Set the variable $c$ to 2, set the variable $v$ to 1
+5. Check if the number of edges has been achieved, if so terminate and return the graph.
+6. Otherwise, connect node $v$ to node $v + c \mod n$
+7. Set $v$ to $(v + 1) \mod n$.
+8. If $v = n$, then set $c$ to $c + 1$.
+9. Go to step 5.
+
+![$n=9$ after 13 iterations, $|E| = 22$](./figures/method2.svg){width=50mm}
+
+This fulfils conditions 1 and 2 since we can provide the number of nodes and edges as input to this function. (As long as $|E| \geq |V|$).
+
+Condition 3 is satisfied in step 3 as it creates a cycle which is connected.
+
+For condition 4, it doesn't work. For example, if $k=9$, and we've done 13 iterations, we can see that $deg(4) = 6,\, deg(8) = 4$. 
+
+The 2 nodes have differing degrees. However, the difference between the maximum and the minimum degree is bounded by 2 no matter when we stop adding edges.
+
+This is because at every $n$ iterations of our algorithm, we can only create 2 new edges for every node. 
+
+So we'll modify condition 4 to be: Keep the degrees of each node **almost** equal.
+
+One thing to note is that after $\frac{n(n-1)}{2} - n$ iterations we arrive at the complete graph. Therefore, we need to add a condition in step 5 to check if there are no more edges to add, if so, then we terminate and return.
+
+# Assigning matchups - Creating $A$ 
+
+## Desireable properties of $A$
 
 If we're in charge of the matchup assignments then there are certain properties that we would like to satisfy. 
 
@@ -227,9 +292,9 @@ $$
 
 Now we can give these assignments to our students and obtain $A'$.
 
-# Ranking methods
+# Ranking methods - Obtaining $\preceq_{t'}$
 
-Now that we've obtained a set of assignments we can now get to work on defining our ranking relation $\preceq_{t'}$.
+Now that we've obtained a set of assignments $A'$ we can now get to work on defining our ranking relation $\preceq_{t'}$.
 
 I've implemented 6 different methods of ranking:
 
@@ -239,6 +304,53 @@ I've implemented 6 different methods of ranking:
 - Kemeny Score
 - Bradley-Terry-Luce (BTL)
 - Refereed Bradley-Terry-Luce (RBTL)
+
+## Win Count
+
+Win count is very simple. We count the number of matches that a student wins. This doesn't take into account the grader or the opponent.
+
+$$WinCount(v) = |\{(i,j,k) \in A' |\, v = j\}|$$
+
+Next, we'll use $WinCount(a)$ as our ranking function $t'$ to obtain a preorder $\preceq_{t'}$ over $V$.
+
+$$a \preceq_{t'} b \text{ iff } WinCount(a) \leq WinCount(b)$$
+
+### Example:
+
+$$V = \{a, b, c, d, e\}$$
+
+$$
+A' = \{(a, c, e), (a, b, d),
+       (b, a, e), (b, c, d),
+       (c, a, b), (c, d, e),
+       (d, c, a), (d, e, b),
+       (e, a, d), (e, c, b)
+       \}
+$$
+
+$$
+\begin{aligned}
+WinCount(a) =& \, |\{(b,a,d), (c, a, b), (e, a, d)\}| \\
+=& \,3
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+&WinCount(a) = &3 \\
+&WinCount(b) = &1 \\
+&WinCount(c) = &4 \\
+&WinCount(d) = &1 \\
+&WinCount(e) = &1 \\
+\end{aligned}
+$$
+
+
+The ranking would be $\{b, d, e\} \preceq_{t'} a \preceq_{t'} c$. 
+
+With a low number of students ties are common, as we increase the size of $V$, we encounter ties less often. In practice, we would pick an arbitrary ordering of the tied students.
+
+![A visualisation of $A'$. You can also calculate $WinCount(n)$ by calculating $outdegree(n)$](./figures/fig3.svg){width=55mm}
 
 ## Borda Count
 
@@ -284,8 +396,6 @@ $$a \preceq_{t'} b \text{ iff } Borda(a) \leq Borda(b)$$
 
 ### Example:
 
-$$V = \{a, b, c, d, e\}$$
-
 $$
 A' = \{(a, c, e), (a, b, d),
        (b, a, e), (b, c, d),
@@ -326,10 +436,6 @@ $$
 $$
 
 The ranking would be $\{b, d, e\} \preceq_{t'} a \preceq_{t'} c$. 
-
-With a low number of students ties are common, as we increase the size of $V$, we encounter ties less often. In practice, we would pick an arbitrary ordering of the tied students.
-
-![A visualisation of $A'$. You can also calculate $Borda(n)$ by calculating $outdegree(n) - indegree(n)$](./figures/fig3.svg){width=55mm}
 
 ## Weighted Borda Count 
 
@@ -568,42 +674,68 @@ $$
 
 $$e \preceq_{t'} d \preceq_{t'} b \preceq_{t'} a \preceq_{t'} c$$
 
-# Iterative Ranking
+# An Altenative Approach - Iterative Ranking
 
-In non-iterative ranking, we distribute all the matchups at once then obtain the entire tournament $A'$ and perform our ranking methods.
+In our first approach, we distribute all the matchups at once and then obtain the entire tournament $A'$. Next, we perform our ranking method.
 
-What if instead we incrementally built up $A'$ in stages and used the incomplete information to distribute matchups? This would allow us to choose to allocate matchup in a way to gives us more information compared to the non-iterative version.
+What if instead, we incrementally built up $A'$ in stages and used the incomplete information to distribute matchups? This would allow us to choose to allocate matchup in a way to gives us more information compared to the non-iterative version.
 
 Here I'll outline the basic steps of our iterative matchup distribution algorithm. 
 
-1. Distribute one matchup to each student. If this is the first pass, then use the non-iterative matchup distribution algorithm. Otherwise, use the Iterative version.
-2. Rank the students using one of the ranking methods E.g. RBTL, Kemeny...
-3. Calculate a score for the skill of the student, based on the ranking.
-4. For the next set of matchups, calculate an uncertainty score for each matchup.
-5. Allocate the more uncertain matchups to the more skilled players, while keeping the other constraints intact.
-6. Until we've distributed the desired amount of matchups, return to step 1.
+1. Generate a set of matchups (Create $E$)
+2. If this is the first pass, skip to step 4
+3. Calculate a score for the skill of every student, based on the previous ranking $\preceq_{t'_{k-1}}$
+4. Calculate a score for the skill of every matchup, based on the previous ranking $\preceq_{t'_{k-1}}$
+5. Assign matchups (Create $A$). If this is the first pass, then use the non-iterative matchup assigner. Otherwise, use the iterative one.
+6. Give matchups to studenst and ask them to mark (Obtain $A'$)
+7. Apply one of the ranking methods, RBTL, Kemeny... (Obtain the current ranking $\preceq_{t'_{k}}$)
+8. Until we've hit the desired amount of iterations, return to step 1.
+
+## Generating Matchups - Creating $E$
 
 One thing to note is that in the first pass, we need to produce a ranking with only $n$ matchups, where $n$ is the number of students. We need every student to be represented in this set of matchups. If we didn't have this, then we wouldn't have any information on students that weren't included in the set of matchups.
 
 This will correspond to a graph (the set of matchups in step 1) in which every node has at least one edge. Another property we'll want is for it to be connected. This would mean that there are no isolated subgraphs where we can't get an effective comparison to the main cohort. We'll talk about the generation of this graph in a later section.
 
 ![An unconnected graph in which we can't compare $a$, $b$, $c$ to the main cohort](./figures/fig2.svg){width=65mm}
+   
+The graph generation is much for the iterative case is much simpler. We need $n$ edges, and for it to be connected. A graph that fulfils these criteria is the cycle graph. 
 
-## Skill and uncertainty
+To ensure that we aren't creating the same edges every time, we'll shuffle the students around every iteration.
 
-In steps 3 and 4 we estimate skill for players and uncertainty for matchups based on the ranking.
+The code to do this is very simple, here's a python snippet of it.
+
+```Python
+def random_cycle(nodes):
+    # Avoid mutating original list
+    cycle_list = nodes.copy()
+    shuffle(cycle_list)
+
+    shifted = cycle_list[1:]
+    graph = set()
+    for pair in zip(cycle_list, shifted):
+        graph.add(pair)
+
+    final_edge = (cycle_list[0], cycle_list[-1])
+    graph.add(final_edge)
+    return graph
+```
+
+## Calculating skill and uncertainty
+
+In steps 3 and 4 we estimate skill for players and uncertainty for matchups based on the previous ranking $\preceq_{t'_{k-1}}$
 
 For skill $w$ we can reuse the definition from the weighted borda count.
 
-$$w_{v} = \frac{idx_{\preceq_{t'}}(v)}{n}$$
+$$w_{v} = \frac{idx_{\preceq_{t'_{k-1}}}(v)}{n}$$
 
 For uncertainty $u$ we could define it like this:
 
-$$u_{a,b} = \frac{|idx_{\preceq_{t'}}(a) - idx_{\preceq_{t'}}(b)|}{n}$$
+$$u_{a,b} = \frac{|idx_{\preceq_{t'_{k-1}}}(a) - idx_{\preceq_{t'_{k-1}}}(b)|}{n}$$
 
 This ensures that matchups that are close together (even matches) have a high uncertainty score, and matchups that are far apart (one-sided matches) are given a low uncertainty score.
 
-## The iterative matchup distribution ILP model
+## Assigning Matchups - Creating $A$
 
 For the ILP model, we can reuse the decision variables and constraints from the non-iterative model.
 
@@ -733,117 +865,10 @@ However, if we divide all the matchups along all the students, the number of mat
 
 As we increase our class size to numbers seen in MOOCs, even linear scaling will be intractable. In these cases, we'll need to make a judgement call and cap the number of matchups assigned to players at the cost of calculating a worse ranking.
 
-## Generating $A$
 
-### Non-Iterative
+## Synthetic data generation - Generating A' 
 
-For the non-iterative algorithm, we want to generate a graph $G = (V, E), \, A \subset V \times E$.
-
-We want to 
-
-1. Choose the number of nodes.
-2. Choose the number of edges.
-3. Have it be connected.
-4. Keep the degrees of each node equal.
-
-Condition 1 is necessary because we want to have a graph that includes every student.
-
-Condition 2 is there because we want to be able to control the number of papers each student has to mark. 
-
-Condition 3 is required to ensure that we don't have isolated subgraphs where we can't compare students to the main cohort.
-
-Condition 4 is needed to ensure the information gleaned from each student isn't unbalanced.
-
-#### Method 1 - Regular Graphs
-
-A $k$-regular graph is a graph in which every node has the same number of neighbours. 
-
-Given $n$ nodes, a $k$-regular graph only exists if $kn$ is even and $n \geq k + 1$. 
-
-<!-- https://math.stackexchange.com/questions/142112/how-to-construct-a-k-regular-graph -->
-An algorithm to generate a $k$-regular graph is as follows:
-
-1. Lay out all your nodes in a circle
-2. If $k = 2m$ is even, then connect each node to its nearest $m$ neighbours
-3. else if $k = 2m + 1$ is odd, then connect each node to its nearest $m$ neighbours and it's opposite vertex.
-
-If $k$ is odd and $nk$ must be even, then when $k$ is odd, $n$ must be even. The opposite vertex only exists when $n$ is even.
-
-![](./figures/kreg_odd.svg){width=50%}
-![](./figures/kreg_even.svg){width=50%}
-\begin{figure}[!h]
-\caption{$k=3, n=6$ on the left, $k=4, n=6$ on the right}
-\end{figure}
-
-If $k \geq 2$, then for each node, it will be connected to its nearest 2 neighbours. Therefore, every graph where $k \geq 2$ generated with this method will have a cycle as a subgraph and will be connected, satisfying condition 3.
-
-Condition 4 is fulfilled since every node has the same degree and condition 1 is easy since we can just choose $n$.
-
-Condition 2 is a bit tricky. $|E|$, the number of edges is bounded by $2 \geq |E| \geq \frac{1}{2} n(n - 1)$ because it must greater than 2 to be connected. Also, the complete graph is a $k$-regular graph, where $k = n - 1$. So on this front, it's fine.
-
-However, every $k$-regular graph has $nk/2$ edges. Since $|E| = nk/2$, we cannot have $r$ edges, where $k_{1} < r < k_{2}$ and $k_{1}, k_{2}$ are multiples of $n/2$. $|E|$ must be a multiple of $k/2$ which limits our control.
-
-For example, given the graph $k=3, n=6, |E|=9$, and the graph $k=4, n=6, |E|=12$. We can see that $9 < |E| < 12$ is impossible while keeping $n$ fixed.
-
-Therefore, we find that conditions 2 and 4 are incompatible. We'll want to keep condition 2, but perhaps we can relax condition 4.
-
-#### Method 2 - Iterative Graph building
-
-We can use a method similar to the first one.
-
-1. Lay out our nodes in a circle. 
-2. Label each node from $1 \dots n$. 
-3. Connect each node to its neighbour. At this point node $1$ should be connected to $2$ and $n$, $2$ to $3$ and $1$...
-4. Set the variable $c$ to 2, set the variable $v$ to 1
-5. Check if the number of edges has been achieved, if so terminate and return the graph.
-6. Otherwise, connect node $v$ to node $v + c \mod n$
-7. Set $v$ to $(v + 1) \mod n$.
-8. If $v = n$, then set $c$ to $c + 1$.
-9. Go to step 5.
-
-![$n=9$ after 13 iterations, $|E| = 22$](./figures/method2.svg){width=70mm}
-
-This fulfils conditions 1 and 2 since we can provide the number of nodes and edges as input to this function. (As long as $|E| \geq |V|$).
-
-Condition 3 is satisfied in step 3 as it creates a cycle which is connected.
-
-For condition 4, it doesn't work. For example, if $k=9$, and we've done 13 iterations, we can see that $deg(4) = 6,\, deg(8) = 4$. 
-
-The 2 nodes have differing degrees. However, the difference between the maximum and the minimum degree is bounded by 2 no matter when we stop adding edges.
-
-This is because at every $n$ iterations of our algorithm, we can only create 2 new edges for every node. 
-
-So we'll modify condition 4 to be: Keep the degrees of each node **almost** equal.
-
-One thing to note is that after $\frac{n(n-1)}{2} - n$ iterations we arrive at the complete graph. Therefore, we need to add a condition in step 5 to check if there are no more edges to add, if so, then we terminate and return.
-
-### Iterative
-    
-For the iterative case, we can greatly simplify the graph generation. We need $n$ edges, and for it to be connected. A graph that fulfils this criterion is the cycle graph. 
-
-To ensure that we aren't creating the same edges every time, we'll shuffle the students around every iteration.
-
-The code to do this is very simple, here's a python snippet of it - 
-
-```Python
-def random_cycle(nodes):
-    # Avoid mutating original list
-    cycle_list = nodes.copy()
-    shuffle(cycle_list)
-
-    shifted = cycle_list[1:]
-    graph = set()
-    for pair in zip(cycle_list, shifted):
-        graph.add(pair)
-
-    final_edge = (cycle_list[0], cycle_list[-1])
-    graph.add(final_edge)
-    return graph
-```
-
-## Generating A'
-
-After we've generated our graph $G = (V, E)$, and assigned the matchups, $A = V \times E$. The students now need to mark the matches.
+After we've generated our graph $G = (V, E)$, and assigned the matchups, $A \subset V \times E$. The students now need to mark the matches.
 
 However, I don't have access to any real students so we'll have to generate some synthetic data.
 
@@ -882,5 +907,34 @@ Ideally, we would like a different function $f$ with the same properties:
 However, I'll leave this up to future work.
 
 # Evaluation
+
+## Closeness - Kendall Tau distance
+
+In order to measure closeness between 2 total preorders we'll need a distance metric. One common metric is the Kendall tau distance. This measures the number of differing pairs in the 2 total preorders.
+
+For example let's take the relations $\preceq_{t}$ and $\preceq_{t'}$ over $V = \{a, b, c, d\}$
+
+$$ c \preceq_{t} a \preceq_{t} d \preceq_{t} b $$
+$$\preceq_{t} = \{(b,d),(b,a),(b,c),(d,a),(d,c),(a,c),(a,a),(b,b),(c,c),(d,d)\}$$
+
+$$ d \preceq_{t'} a \preceq_{t'} b \preceq_{t'} c $$
+$$\preceq_{t'} = \{(c,b),(c,a),(c,d),(b,a),(b,d),(a,d),(a,a),(b,b),(c,c),(d,d)\}$$
+
+The set of differing pairs is
+
+$$\preceq_{t} \setminus \preceq_{t'} = \{(b,c), (d,a), (d,c), (a,c)\}$$
+
+So the Kendall Tau distance is 
+$$K_{d}(\preceq_{t}, \preceq_{t'}) = |\preceq_{t} \setminus \preceq_{t}| = 4 $$
+
+$$|\preceq_{t} \setminus \preceq_{t'}| = |\preceq_{t'} \setminus \preceq_{t}|$$
+
+If we let $n$ be the number of items in our preorders, and the first preorder is the reverse of the second preorder, then $\frac{n(n-1)}{2}$ is the Kendall Tau distance between them. This corresponds to the situation where all the pairs are differing. Dividing by this number will bring the Kendall tau distance into the range $[0, 1]$.
+
+Therefore, the normalised Kendall tau distance $K_{n}$ is
+
+$$K_{n} = \frac{K_{d}}{\frac{n(n-1)}{2}} = \frac{2K_{d}}{n(n - 1)}$$
+
+The reason for normalisation is to allow for comparisons between runs where $n$ differs. The kendall tau distance for a large $n$ with $k$ differing pairs should be lower than the kendall tau distance for a small $n$ with $k$ difffering pairs.
 
 
