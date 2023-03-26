@@ -14,10 +14,10 @@ def ranking_to_weights(ranking):
 def win_count(tournament):
     """
     The win_count score of a student is:
-    The node's outdegree 
+    The node's outdegree
     """
     num_students = len(tournament)
-    scores = {i : 0 for i in range(num_students)}
+    scores = {i: 0 for i in range(num_students)}
     for grader in tournament:
         for winner, _ in tournament[grader]:
             scores[winner] += 1
