@@ -52,6 +52,7 @@ inital_num_students = 5
 classroom = Classroom(inital_num_students)
 nc2 = (inital_num_students * (inital_num_students - 1)) / 2
 pairs = None
+assignments = None
 
 
 def get_img_tag():
@@ -67,6 +68,36 @@ tag_gen = get_img_tag()
 
 
 # -------------------- CALLBACKS -------------------------
+def assign_students():
+    global assignments
+    n = len(classroom)
+    distributor = dp.PaperDistributor(n, pairs)
+    assignments = distributor.get_solution()
+
+    if dpg.does_alias_exist("Assignment Table"):
+        dpg.delete_item("Assignment Table")
+
+    with dpg.table(tag="Assignment Table", parent="Assignment Group"):
+        dpg.add_table_column(label="Grading Student")
+        dpg.add_table_column(label="First Student")
+        dpg.add_table_column(label="Second Student")
+        # 2 options
+        # enumeate through dict naturally
+
+        # or you could transform dict so that you can iterate over as array.
+        # 2nd approach allows you to do enumerate for the tags
+        # 1st allows you to have faster? code
+        id_num = 0
+        for grader in assignments:
+            for p1, p2 in assignments[grader]:
+                with dpg.table_row(tag=f"Assignment Table Row {id_num}"):
+                    dpg.add_text(str(grader))
+                    dpg.add_text(str(p1))
+                    dpg.add_text(str(p2))
+                id_num += 1
+
+
+
 def set_classroom(_, app_data):
     old_size = len(classroom)
     new_size = app_data
@@ -151,6 +182,19 @@ def gen_graph():
                 dpg.add_text(str(a))
                 dpg.add_text(str(b))
 
+    if dpg.does_alias_exist("Assignment Table"):
+        dpg.delete_item("Assignment Table")
+
+    with dpg.table(tag="Assignment Table", parent="Assignment Group"):
+        dpg.add_table_column(label="Grading Student")
+        dpg.add_table_column(label="First Student")
+        dpg.add_table_column(label="Second Student")
+        for i, (a, b) in enumerate(pairs):
+            with dpg.table_row(tag=f"Assignment Table Row {i}"):
+                dpg.add_text("?")
+                dpg.add_text(str(a))
+                dpg.add_text(str(b))
+
 
 # ----------------CALLBACKS END ------------------------
 
@@ -199,8 +243,16 @@ with dpg.window(
 
         dpg.add_button(label="Generate graph - Preview", callback=gen_graph)
 
-# with dpg.window(label="Assignment", autosize=True, pos=(100, 0)) as tertiary_window:
-#     dpg.add
+# Need to read the student list,
+# then run the mip
+# somehow need to do a loading bar
+
+with dpg.window(label="Assignment", autosize=True, pos=(100, 0)) as tertiary_window:
+    with dpg.group(horizontal=True):
+        dpg.add_button(label="Assign Students", callback=assign_students)
+        dpg.add_text("Warning, this operation may take a while.")
+
+    dpg.add_group(tag="Assignment Group")
 
 
 dpg.create_viewport(title="Tournament Ranking")
