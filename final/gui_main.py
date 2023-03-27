@@ -72,21 +72,27 @@ def assign_students():
     global assignments
     n = len(classroom)
     distributor = dp.PaperDistributor(n, pairs)
+
+    # Create loading label 
+    dpg.add_text(
+        "Loading...",
+        tag="Loading Text",
+        parent="Assignment Control Group"
+    )
+
     assignments = distributor.get_solution()
+
+    # Delete loading label
+    dpg.delete_item("Loading Text")
 
     if dpg.does_alias_exist("Assignment Table"):
         dpg.delete_item("Assignment Table")
 
-    with dpg.table(tag="Assignment Table", parent="Assignment Group"):
+    with dpg.table(tag="Assignment Table", parent="Assignment Table Group"):
         dpg.add_table_column(label="Grading Student")
         dpg.add_table_column(label="First Student")
         dpg.add_table_column(label="Second Student")
-        # 2 options
-        # enumeate through dict naturally
 
-        # or you could transform dict so that you can iterate over as array.
-        # 2nd approach allows you to do enumerate for the tags
-        # 1st allows you to have faster? code
         id_num = 0
         for grader in assignments:
             for p1, p2 in assignments[grader]:
@@ -95,8 +101,6 @@ def assign_students():
                     dpg.add_text(str(p1))
                     dpg.add_text(str(p2))
                 id_num += 1
-
-
 
 def set_classroom(_, app_data):
     old_size = len(classroom)
@@ -185,7 +189,7 @@ def gen_graph():
     if dpg.does_alias_exist("Assignment Table"):
         dpg.delete_item("Assignment Table")
 
-    with dpg.table(tag="Assignment Table", parent="Assignment Group"):
+    with dpg.table(tag="Assignment Table", parent="Assignment Table Group"):
         dpg.add_table_column(label="Grading Student")
         dpg.add_table_column(label="First Student")
         dpg.add_table_column(label="Second Student")
@@ -243,16 +247,13 @@ with dpg.window(
 
         dpg.add_button(label="Generate graph - Preview", callback=gen_graph)
 
-# Need to read the student list,
-# then run the mip
-# somehow need to do a loading bar
-
 with dpg.window(label="Assignment", autosize=True, pos=(100, 0)) as tertiary_window:
-    with dpg.group(horizontal=True):
+    with dpg.group(horizontal=True, tag="Assignment Control Group"):
         dpg.add_button(label="Assign Students", callback=assign_students)
         dpg.add_text("Warning, this operation may take a while.")
 
-    dpg.add_group(tag="Assignment Group")
+
+    dpg.add_group(tag="Assignment Table Group")
 
 
 dpg.create_viewport(title="Tournament Ranking")
@@ -260,3 +261,6 @@ dpg.setup_dearpygui()
 dpg.show_viewport()
 dpg.start_dearpygui()
 dpg.destroy_context()
+
+# TODO 
+# Prevent people from deleting windows
