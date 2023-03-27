@@ -54,13 +54,11 @@ nc2 = (inital_num_students * (inital_num_students - 1)) / 2
 pairs = None
 assignments = None
 
-
 def get_img_tag():
     num = 0
     while True:
         yield (f"img_{num - 1}", f"img_{num}")
         num += 1
-
 
 tag_gen = get_img_tag()
 
@@ -148,30 +146,37 @@ def gen_graph():
     e = dpg.get_value("Edges Input")
     pairs = fair_graph(n, e)
 
-    dot = graphviz.Graph("Matchups", engine="circo")
-    dot.attr("node", shape="circle")
-    for i in classroom.grades:
-        dot.node(str(i), str(i))
-
-    for a, b in pairs:
-        dot.edge(str(a), str(b))
-
-    dot.format = "png"
-    dot.render(directory="./temp/")
-
-    width, height, _, data = dpg.load_image("./temp/Matchups.gv.png")
-
     with dpg.window(
         on_close=lambda sender: dpg.delete_item(sender),
         label=f"Graph with {len(classroom)} students and {dpg.get_value('Edges Input')} matchups",
         autosize=True,
     ):
+        dpg.add_text(
+            "Loading...",
+            tag="Graph Loading Text",
+        )
+
+        dot = graphviz.Graph("Matchups", engine="circo")
+        dot.attr("node", shape="circle")
+        for i in classroom.grades:
+            dot.node(str(i), str(i))
+
+        for a, b in pairs:
+            dot.edge(str(a), str(b))
+
+        dot.format = "png"
+        dot.render(directory="./temp/")
+
+        width, height, _, data = dpg.load_image("./temp/Matchups.gv.png")
+
         old_tag, new_tag = next(tag_gen)
         with dpg.texture_registry():
             dpg.delete_item(old_tag)
             dpg.add_static_texture(
                 width=width, height=height, default_value=data, tag=new_tag
             )
+
+        dpg.delete_item("Graph Loading Text")
         dpg.add_image(new_tag)
 
     # Table Stuff
@@ -205,7 +210,7 @@ def gen_graph():
 dpg.create_context()
 
 with dpg.window(
-    label="Classroom Generation", autosize=True, pos=(0, 0)
+    label="Classroom Generation", autosize=True, pos=(0, 0), no_close=True
 ) as primary_window:
     dpg.add_input_int(
         label="Number of Students",
@@ -226,7 +231,7 @@ with dpg.window(
 
 
 with dpg.window(
-    label="Matchup Generation", autosize=True, pos=(0, 300)
+    label="Matchup Generation", autosize=True, pos=(0, 300), no_close=True
 ) as secondary_window:
     with dpg.group(tag="Matchup Group"):
         dpg.add_input_int(
@@ -247,13 +252,16 @@ with dpg.window(
 
         dpg.add_button(label="Generate graph - Preview", callback=gen_graph)
 
-with dpg.window(label="Assignment", autosize=True, pos=(100, 0)) as tertiary_window:
+with dpg.window(label="Assignment", autosize=True, pos=(100, 0), no_close=True) as tertiary_window:
     with dpg.group(horizontal=True, tag="Assignment Control Group"):
         dpg.add_button(label="Assign Students", callback=assign_students)
         dpg.add_text("Warning, this operation may take a while.")
 
 
     dpg.add_group(tag="Assignment Table Group")
+
+# with dpg.window(label="results", autosize=True, pos=(100,100), no_close=True) as quaternary_window:
+    
 
 
 dpg.create_viewport(title="Tournament Ranking")

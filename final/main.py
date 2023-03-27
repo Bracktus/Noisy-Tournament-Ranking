@@ -9,7 +9,7 @@ from generate_tourney import TournamentGenerator
 
 def main():
     n = 33
-    papers = 13
+    papers = 11
 
     classroom = Classroom(n, malicious=False)
     real = classroom.get_true_ranking()
@@ -20,7 +20,6 @@ def main():
     iter_ranking = run_iterative_tourney(n, papers - 1, rbtl, tourney_generator)
     kt0 = kendall_tau(real, iter_ranking)
 
-    tourney_generator.reset_iter_tourney()
     iter_ranking2 = run_iterative_tourney(n, papers - 1, copeland, tourney_generator)
     kt_s = kendall_tau(real, iter_ranking2)
 
