@@ -8,6 +8,7 @@ header-includes:
   - \newcommand{\argmax}{\mathop{\mathrm{argmax}}\limits}
   - \newcommand{\argmin}{\mathop{\mathrm{argmin}}\limits}
 geometry: margin=30mm
+numbersections: true
 ---
 
 # Mathematical formulation of the problem:
@@ -179,11 +180,11 @@ If we're in charge of the matchup assignments then there are certain properties 
 2. Keep the workload of each student fairly even.
 3. We obtain a baseline amount of 'information' about each player.
 
-### Condition 1\. 
+**Condition 1.**
 
 This is already handled by the definition of $A$.
 
-### Condition 2\. 
+**Condition 2.**
 
 If player 1 is assigned the matchups: 
 
@@ -198,7 +199,7 @@ and player 2 is assigned the matchups
 
 Then player 2 is marking a lot more matchups than player 1 which is an unfair workload.
 
-### Condition 3\. 
+**Condition 3.**
 
 If we assume the information on a student $v$ to be a measure of how many good graders have marked their matchup it becomes difficult to satisfy this. After all, how can we identify the good graders before we've ranked the students? If we take the grading skill out of the equation, then we can measure this by the number of times student $v$ appears in $E$. Taking this, we can satisfy this condition by constructing $E$ such that each student appears in $E$ a roughly equal amount of times.
 
