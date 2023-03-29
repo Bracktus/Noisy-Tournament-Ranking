@@ -47,6 +47,10 @@ def copeland(tournament, weights=None):
     ranking = [student for (student, _) in ranking]
     return ranking
 
+def weighted_borda(tournament):
+    ranking = copeland(tournament)
+    weights = ranking_to_weights(ranking)
+    return copeland(tournament, weights)
 
 def kemeny(tournament):
     """

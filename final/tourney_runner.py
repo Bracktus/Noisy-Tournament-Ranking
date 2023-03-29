@@ -1,10 +1,6 @@
 import distribute_papers as dp
 from graph_utils import random_cycle
 
-# Idea
-# instead of storing state in the class.
-# let's maintain internal state in the method and just merge the dictionaries
-
 def tourney_merge(t1, t2):
     acc = {}
     for grader in t1:
@@ -21,10 +17,6 @@ def run_iterative_tourney(n, rounds, ranker, tourney_generator):
     ranker: the ranking function used in the process
     classroom: the students participating
     """
-
-    # Big hack.
-    # run this BEFORE doing the the regular tournies.
-    # Otherwise it'll gain more information than it actually knows due to it ranking over the cache.
 
     ppr = 1
     pairs = random_cycle(n)

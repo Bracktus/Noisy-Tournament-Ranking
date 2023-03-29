@@ -2,27 +2,6 @@ from itertools import product
 from collections import defaultdict
 import pulp as pl
 
-"""
-We want the paper distribution algo to:
-
-- Be fast
-- Avoid giving students their own paper DONE
-- Prevent giving too many of one student to a specific student DONE
-- Keep the number of papers each student marks fairly even DONE
-- Maximise information gleamed
-
-There are n C 2 = n*(n-1) / 2. matchups.
-That means if we want a complete picture we'll
-have to assign each student around (n - 1)/2 pairs
-
-If we were to assign every student every matchup (exculding their own).
-
-Then they would be assigned (n*(n-1) / 2) - (n - 1) matchups.
-
-"make it work, make it right, make it fast"
-"""
-
-
 class PaperDistributor:
     def __init__(self, n, pairs=None):
         self.prob = pl.LpProblem("Paper_Distribution", pl.LpMinimize)
@@ -87,9 +66,9 @@ class PaperDistributor:
         c = pl.LpVariable("c", lowBound=0, cat="Integer")
         for asins in student_contains.values():
             # Every student marks an amount of another student's paper.
-            # For example for the assingment:
+            # For example for the assignment:
             # a:[(b,c), (c, d)]
-            # (a,b) = 1, (a,c) = 2 and (a,d) = 1 since a marks b's paper twice
+            # (a,b) = 1, (a,c) = 2 and (a,d) = 1 since a marks c's paper twice
             # So here were looping over all such combinations and setting c to be the maximum of these values
             self.prob += pl.lpSum(asins) <= c
 

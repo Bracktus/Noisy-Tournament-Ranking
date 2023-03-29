@@ -32,22 +32,21 @@ class TournamentGenerator:
             matchups = assignments[grader]
 
             for p1, p2 in matchups:
-                first_in = (p1, p2) if (p1, p2) in self.cache[grader] else False
-                second_in = (p2, p1) if (p2, p1) in self.cache[grader] else False
+                grades = self.classroom.grades
+                winner, loser = (p1, p2) if grades[p1] > grades[p2] else (p2, p1)
+                correct = (winner, loser)
+                wrong = (loser, winner)
 
-                if first_in:
-                    tournament_results[grader].append(first_in)
-                elif second_in:
-                    tournament_results[grader].append(second_in)
+                if correct in self.cache[grader]:
+                    tournament_results[grader].append(correct)
+                elif wrong in self.cache[grader]:
+                    tournament_results[grader].append(wrong)
                 else:
-                    grades = self.classroom.grades
-                    winner, loser = (p1, p2) if grades[p1] > grades[p2] else (p2, p1)
                     grader_prob = self.get_grader_prob(grader, p1, p2)
-
                     if grader_prob > random():
-                        result = (winner, loser)
+                        result = correct
                     else:
-                        result = (loser, winner)
+                        result = wrong
 
                     self.cache[grader].append(result)
                     tournament_results[grader].append(result)
