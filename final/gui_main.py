@@ -29,7 +29,6 @@ from tourney_runner import run_iterative_tourney as run_iter
 import distribute_papers as dp
 import rankers as rk
 
-
 # ------ GLOBAL STATE -------------------
 
 RANKING_METHODS = {
@@ -43,7 +42,6 @@ RANKING_METHODS = {
 
 inital_num_students = 5
 classroom = Classroom(inital_num_students)
-nc2 = (inital_num_students * (inital_num_students - 1)) / 2
 pairs = None
 assignments = None
 
@@ -60,6 +58,7 @@ tag_gen = get_img_tag()
 dpg.create_context()
 
 def set_classroom(_, app_data):
+    global classroom
     old_size = len(classroom)
     new_size = app_data
 
@@ -69,12 +68,8 @@ def set_classroom(_, app_data):
         for i in range(num_to_add):
             classroom.add_student()
             row_id = old_size + i
-            with dpg.table_row(
-                parent="Classroom_Table", tag=f"Classroom_Table_Row{row_id}"
-            ):
-                dpg.add_text(str(old_size + i))
-                dpg.add_text(str(classroom.grades[old_size + i]))
-
+            classroom_row(row_id)
+            
     elif new_size < old_size:
         num_to_del = old_size - new_size
         for i in range(num_to_del):
@@ -94,6 +89,24 @@ def set_classroom(_, app_data):
     dpg.configure_item("Edges Input", max_value=ub, min_value=lb)
 
 
+def classroom_row(grade_id):
+
+    def set_val(_, app_data):
+        classroom.grades[grade_id] = app_data
+
+    with dpg.table_row(tag=f"Classroom_Table_Row_{grade_id}", parent="Classroom_Table"):
+        dpg.add_text(str(grade_id))
+        dpg.add_input_double(
+            default_value=classroom.grades[grade_id],
+            step=0, #Disable +/- buttons
+            min_clamped=True,
+            max_clamped=True,
+            min_value=0,
+            max_value=1,
+            callback=set_val,
+            width=-1,
+        )
+
 with dpg.window(
     label="Classroom Generation", autosize=True, pos=(0, 0), no_close=True
 ) as primary_window:
@@ -110,10 +123,8 @@ with dpg.window(
         dpg.add_table_column(label="Student ID")
         dpg.add_table_column(label="Test Score")
         for i in range(inital_num_students):
-            with dpg.table_row(tag=f"Classroom_Table_Row{i}"):
-                dpg.add_text(str(i))
-                dpg.add_text(str(classroom.grades[i]))
-
+            classroom_row(i)
+            
 #---------------------
 def gen_graph():
     if pairs == None:
@@ -193,6 +204,7 @@ with dpg.window(
     label="Matchup Generation", autosize=True, pos=(0, 300), no_close=True
 ) as secondary_window:
     with dpg.group(tag="Matchup Group"):
+        nc2 = (inital_num_students * (inital_num_students - 1)) / 2
         dpg.add_input_int(
             label="Number of Matchups",
             tag="Edges Input",
@@ -280,7 +292,6 @@ def run_rankers():
             rounds = floor(len(pairs)/n)
             results = run_iter(n, rounds, ranking_func, tourney_gen)
             acc[f"Iterative {method}"] = results
-        print("done")
 
     tourney = tourney_gen.generate_tournament(assignments)
     for method in RANKING_METHODS:
@@ -289,11 +300,8 @@ def run_rankers():
             results = ranking_func(tourney)
             acc[method] = results
 
-        print("done")
-
     if dpg.does_alias_exist("Results Table"):
         dpg.delete_item("Results Table")
-
 
     # Sort by kendall tau
     real = classroom.get_true_ranking()
@@ -318,13 +326,11 @@ def run_rankers():
 
     dpg.delete_item("Loading Text Results")
 
-            
-            
-        
 with dpg.window(label="Ranking", autosize=True, pos=(100,100), no_close=True) as quaternary_window:
     with dpg.group(tag="Ranking Group"):
         for i, method in enumerate(RANKING_METHODS):
             with dpg.group(horizontal=True):
+
                 dpg.add_checkbox(
                     label=method,
                     tag=f"{method}_checkbox",
