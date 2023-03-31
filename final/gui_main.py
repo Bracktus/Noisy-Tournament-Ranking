@@ -19,6 +19,7 @@ Add user options
 import dearpygui.dearpygui as dpg
 import graphviz
 from math import floor
+from itertools import chain
 
 from classroom import Classroom
 from generate_tourney import TournamentGenerator
@@ -75,7 +76,7 @@ def set_classroom(_, app_data):
         for i in range(num_to_del):
             classroom.del_student()
             row_id = (old_size - i) - 1
-            dpg.delete_item(f"Classroom_Table_Row{row_id}")
+            dpg.delete_item(f"Classroom_Table_Row_{row_id}")
 
     # When you increase or decrease the classroom size,
     # we should also update avg workload
@@ -224,6 +225,7 @@ with dpg.window(
         dpg.add_button(label="Save", callback=save_matchups)
         dpg.add_button(label="Generate graph - Preview", callback=gen_graph)
 
+
 def assign_students():
     global assignments
     n = len(classroom)
@@ -259,7 +261,7 @@ def assign_students():
                 id_num += 1
 
 
-with dpg.window(label="Assignment", autosize=True, pos=(100, 0), no_close=True) as tertiary_window:
+with dpg.window(label="Assignment", autosize=True, pos=(400, 0), no_close=True) as tertiary_window:
     with dpg.group(horizontal=True, tag="Assignment Control Group"):
         dpg.add_button(label="Assign Students", callback=assign_students)
         dpg.add_text("Warning, this operation may take a while.")
@@ -269,12 +271,28 @@ with dpg.window(label="Assignment", autosize=True, pos=(100, 0), no_close=True) 
 
 #-----------------------
 
+# Error message - Hidden by default
+with dpg.window(label="Delete Files", modal=True, show=False, tag="modal_id", no_title_bar=True):
+    dpg.add_text("Please ensure that assignements is set")
+    with dpg.group(horizontal=True):
+        dpg.add_button(label="OK", width=75, callback=lambda: dpg.configure_item("modal_id", show=False))
+
+
 def run_rankers():
     if assignments == None or pairs == None:
+        dpg.configure_item("modal_id", show=True)
+        return
+    elif sum(len(i) for i in assignments.values()) != len(pairs):
+        # If the number of assignements doesn't match the number of pairs
+        dpg.configure_item("modal_id", show=True)
         return
     
     tourney_gen = TournamentGenerator(classroom)
     acc = {}
+
+    # Delete the table
+    if dpg.does_alias_exist("Results Table"):
+        dpg.delete_item("Results Table")
 
     # Create loading label 
     dpg.add_text(
@@ -300,13 +318,11 @@ def run_rankers():
             results = ranking_func(tourney)
             acc[method] = results
 
-    if dpg.does_alias_exist("Results Table"):
-        dpg.delete_item("Results Table")
-
     # Sort by kendall tau
     real = classroom.get_true_ranking()
     acc = dict(sorted(acc.items(), key=lambda item: kendall_tau(real, item[1])))
 
+    # Recreate the table
     with dpg.table(
             tag="Results Table",
             parent="Ranking Group",
@@ -326,7 +342,7 @@ def run_rankers():
 
     dpg.delete_item("Loading Text Results")
 
-with dpg.window(label="Ranking", autosize=True, pos=(100,100), no_close=True) as quaternary_window:
+with dpg.window(label="Ranking", autosize=True, pos=(400,200), no_close=True) as quaternary_window:
     with dpg.group(tag="Ranking Group"):
         for i, method in enumerate(RANKING_METHODS):
             with dpg.group(horizontal=True):
@@ -342,7 +358,6 @@ with dpg.window(label="Ranking", autosize=True, pos=(100,100), no_close=True) as
                     tag=f"iter_{method}_checkbox",
                     default_value=False
                 )
-
 
     dpg.add_button(
         label="Run ranking methods",

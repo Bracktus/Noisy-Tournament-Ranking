@@ -15,10 +15,9 @@ def run_iterative_tourney(n, rounds, ranker, tourney_generator):
     n: number of players
     rounds: number of rounds
     ranker: the ranking function used in the process
-    classroom: the students participating
+    tourney_generator: tournament_generator used to get student evaluations
     """
 
-    ppr = 1
     pairs = random_cycle(n)
     assigner = dp.PaperDistributor(n, pairs)
     assignments = assigner.get_solution()
@@ -41,6 +40,6 @@ def run_iterative_tourney(n, rounds, ranker, tourney_generator):
 
         tournament = tourney_generator.generate_tournament(assignments)
         full_tournament = tourney_merge(full_tournament, tournament)
-        ranking = ranker(full_tournament)
 
+        ranking = ranker(full_tournament)
     return ranking
