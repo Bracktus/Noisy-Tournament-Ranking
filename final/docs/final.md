@@ -54,7 +54,7 @@ In this case we get a cycle and it is unclear which team is the best. If the tou
 
 Various approaches such as have been used to solve this ranking problem. A survey in [@gonzalez-diaz_paired_2014] has applied Scores, Maximum Likelihood, Fair Bets, Least Squares, Recursive Bucholz and Generalised row sum methods to approach the problem.  
 
-Another perspective on this is that the tournmanent is made up of edges where each edge has a chance of being wrong (an upset occurred). Taking this view we can try to flip edges until we make the tournament acyclic. This is similar to the kemeny ranking method we use in  [@kenyon-mathieu_how_2007].
+Another perspective on this is that the tournament is made up of edges where each edge has a chance of being wrong (an upset occurred). Taking this view we can try to flip edges until we make the tournament acyclic. This is similar to the kemeny ranking method we use in  [@kenyon-mathieu_how_2007].
 
 Our project can be viewed as a variation of this concept. In sports, upsets can occur due to various external factors, leading to "noise" in the outcome. However, in our project, the "noise" is concentrated in the peer grader making the pairwise comparison.
 
@@ -72,7 +72,7 @@ For cardinal ranking, Raman and Joachims have used the Mallows Model, the Bradle
 
 For pairwise ranking I've found some previous work that examines noisy rankings. One common method is to model the tournament with a Bradley-Terry Model and uses Maximum Likelihood Estimation to calculate skill levels for students [@shah_case_nodate] [@chen_pairwise_2013].
 
-Another approach for pairwise ranking is graph editing. This is where we flip, remove or add edges to our directed graph to obtain some sort of way to rank the students. For example we could turn it into a directed acyclic graph (DAG) and get a total order [@kenyon-mathieu_how_2007]. Or we could model our tournament as a biparte graph and apply chain editing to obtain an ordering over the students [@singleton_rankings_2021].
+Another approach for pairwise ranking is graph editing. This is where we flip, remove or add edges to our directed graph to obtain some sort of way to rank the students. For example we could turn it into a directed acyclic graph (DAG) and get a total order [@kenyon-mathieu_how_2007]. Or we could model our tournament as a bipartite graph and apply chain editing to obtain an ordering over the students [@singleton_rankings_2021].
 
 In terms of edge colouring, this paper [@januario_edge_2016] explores local search for solving the edge colouring problem in sports scheduling. Another paper discusses the closely related problem of assignment of papers in scientific peer review [@stelmakh_peerreview4all_2019].
 
@@ -848,9 +848,7 @@ Each time this is run, it'll have no memory of the previous passes. Therefore, i
 
 ### Side note: Brute force solution 
 
-A cycle graph has a simple structure. A valid assignment over the graph, without taking into account conditions 2 and 3 from ['Additional restrictions on $A$'](#Additional restrictions on $A$), is a graph in which each edge is labelled. 
-
-The set of labels is the same as the set of vertices $V$. Each label must be used once, and if an edge is incident to a vertex $v$, then the edge cannot be labelled with $v$.
+A cycle graph has a simple structure. A valid assignment over the graph, without taking into account conditions 2 and 3 from ['Additional restrictions on $A$'](#Additional restrictions on $A$), is a graph in which each edge is labelled. The set of labels is the same as the set of vertices $V$. Each label must be used once, and if an edge is incident to a vertex $v$, then the edge cannot be labelled with $v$.
 
 For a cycle graph, the number of possible assignments of students can be described by the number of permutations $s$ of the sequence $0, 1, \dots n - 1$, such that $s[i] \neq i$ and $s[i] \neq i + 1 \mod n$ for all $i$.
 
@@ -950,7 +948,7 @@ However, if we divide all the matchups along all the students, the number of mat
 
 As we increase our class size to numbers seen in MOOCs, even linear scaling will be intractable. In these cases, we'll need to make a judgement call and cap the number of matchups assigned to players at the cost of calculating a worse ranking.
 
-## Synthetic data generation - Generating A' 
+## Synthetic data generation - Generating $A'$ 
 
 After we've generated our graph $G = (V, E)$, and assigned the matchups, $A \subset V \times E$. The students now need to mark the matches.
 
@@ -959,7 +957,7 @@ However, I don't have access to any real students so we'll have to generate some
 To do this we'll perform the following steps:
 
 1. Give every student $v$ a random score based on a normal distribution, $\mu = 0.5, \sigma = 0.25$. This score will be clamped into the range $[0, 1]$. Let's call this score $t(v)$.
-2. For every assignent in $A'$ generate a random number $r$ in the range $[0, 1]$.
+2. For every assignment in $A'$ generate a random number $r$ in the range $[0, 1]$.
 3. Check if $g(v) > r$. Where $g = f \circ t, \, f: [0, 1] \rightarrow [0, 1]$. This is the grading skill of the player. $f$ is a mapping from test score to grading skill. 
 4. If so, then the student marks the matchup correctly, otherwise, the student marks the matchup incorrectly. Add this result to the set $A'$.
 
@@ -1001,9 +999,31 @@ The libraries used are:
 - `graphvis` for creating graph visualisations
 - `dearpygui` for creating a GUI
 
-I'm also using `pudb` for an easy debugging experience. `Gurobi` was chosen for the solver as it runs relatively quickly on my hardware and it has been proven commercially. `black` was used as a code formatter. This allows us to keep a consistent code style an improve readability.
+I'm also using `pudb` for an easy debugging experience. `Gurobi` was chosen for the solver as it runs relatively quickly on my hardware and it has been proven commercially. `black` was used as a code formatter. This allows us to keep a consistent code style and improve readability.
 
 ## Program structure 
+
+I've split my program into 5 core modules:
+
+- `classroom.py`
+- `generate_tourney.py`
+- `graph_utils.py`
+- `distribute_papers.py`
+- `rankers.py`
+
+`classroom.py` contains a single class (in the OOP sense). It creates a dictionary of students, assigns them grades and sets up an interface for editing the dictionary.
+
+Next the `graph_utils.py` module is used to generate a graph $G = (V, E)$. This contains the graph generation algorithm I described in section 4.2. Instead of the traditional adjacency list/matrix representations of graphs, we just use a set of 2-tuples.[^2] 
+
+[^2]: This keeps the implementation close to the theory and is much simpler than the other data structures. The main reason we don't use these other representations is that they aren't necessary, the advantages of adjacency lists/matricies over my approach are quick lookup of neighbours. We never need to perform this operation so this isn't relevant. As a results, we gain a more memory efficient $O(E)$ representation. 
+
+This graph is passed into the `distribute_papers.py` module to run our MIP model for matchup assignment. These assignments are represented by another dictionary. 
+
+This assignment dictionary and the classroom object is then passed into `generate_tourney.py` where the synthetic data $A'$ is created. Finally a bunch of functions (ranking methods) in `rankers.py` take these assignments and return a ranking.
+
+I've mainly used an OOP style mixed with a few pure functions where using a class was overkill. 
+
+## Program features and UI design
 
 # Evaluation
 
@@ -1034,22 +1054,30 @@ Therefore, the normalised Kendall tau distance $K_{n}$ is
 
 $$K_{n} = \frac{K_{d}}{\frac{n(n-1)}{2}} = \frac{2K_{d}}{n(n - 1)}$$
 
-The reason for normalisation is to allow for comparisons between runs where $n$ differs. The kendall tau distance for a large $n$ with $k$ differing pairs should be lower than the kendall tau distance for a small $n$ with $k$ difffering pairs.
+The reason for normalisation is to allow for comparisons between runs where $n$ differs. The kendall tau distance for a large $n$ with $k$ differing pairs should be lower than the kendall tau distance for a small $n$ with $k$ differing pairs.
 
 ## Analysis
 
-![Comparison of voting methods](./figures/results.svg)
+![Comparison of voting methods for $|V| = 10, 15, 20$](./figures/results.svg)
 
-Here we can see the kendall-tau scores for our different voting methods. On the x-axis we get the number of matchups per student. For example, if the number of matchups per student is 7, and there are 15 students, then there are $7 \times 15 = 105$ matchups in total.
+In figure 7 we can see the kendall-tau scores for our different voting methods. On the x-axis we get the number of matchups per student. For example, if the number of matchups per student is 7, and there are 15 students, then there are $7 \times 15 = 105$ matchups in total.
 
 As a general trend we can see that in the iterative case, it only gets more and more accurate as we increase the number of matchups. This could be explained by the fact that as we add more matchups, we gain more information about the students and can therefore make a better assessment of their relative rankings.
 
-For the non-iterative case, something odd happens. Initally, we get a downward trend akin to the iterative case. However, at a certain point the score plateaus, with the exception of the kemeny score.
+For the non-iterative case, something odd happens. Initially, we get a downward trend akin to the iterative case. However, at a certain point the score plateaus, with the exception of the kemeny score.
 
-The explanation of this lies in the amount of infomation available to the non-iterative case. As we recall, in the non-iterative case, each edge in the graph is assigned to one student. This means that when we arrive at the complete graph, we can no longer obtain any more information since no more assignments are possible. To confirm this, take a look at $|V| = 15$ in the non-iterative case. We can see that it begins to plateau around the '7 papers per student' mark. $7 \times 15 = \binom{15}{2} = 105$.
+The explanation of this lies in the amount of information available to the non-iterative case. As we recall, in the non-iterative case, each edge in the graph is assigned to one student. This means that when we arrive at the complete graph, we can no longer obtain any more information since no more assignments are possible. To confirm this, take a look at $|V| = 15$ in the non-iterative case. We can see that it begins to plateau around the '7 papers per student' mark. $7 \times 15 = \binom{15}{2} = 105$.
 
-The kemeny ranking method doesn't plateau though. This is due to the way we calculate the kemeny ranking. Simulated annealing is not deterministic, it uses random numbers and can often produce better or worse outcomes even with the same hyperparameters. Therefore, the variation we see in the kemeny ranking comes down to the non-deterministic nature of simulated annealing. If we were to calculate the actual kemeny ranking (which is NP-hard), then the graph would exhibit similar behaviour.
+The kemeny ranking method doesn't plateau though. This is due to the way we calculate the kemeny ranking. Simulated annealing is not deterministic, it uses random numbers and can often produce better or worse outcomes even with the same hyperparameters. Therefore, the variation we see in the kemeny ranking comes down to the non-deterministic nature of simulated annealing. If we were to calculate the actual kemeny ranking (which is NP-hard), then the graph would exhibit the same plateauing behaviour.
 
+An additional result we find is that is that the rankings become more accurate as the number of students increase. This is probably due to the fact that we can obtain more information in general. The number of edges available to mark is $\binom{n}{2}$ in the non-iterative case and $(\binom{n}{2} - (n - 1)) \cdot n$ in the iterative case where $n = |V|$. Therefore, as the number of edges available increases, we'll gain more information and therefore get more accurate rankings.
 
+![Comparison of voting methods for $|V| = 30$](./figures/results_2.svg)
 
-<!-- # References -->
+Let's take a closer look at the ranking methods themselves. In figure 8, we see the results for a classroom of 30 students. To make a like for like comparison between non-iterative and iterative methods we should only look at data points before '15 papers per student'.
+
+Looking at the two graphs we can see that both methods perform similarly up to this point with the exception of non-iterative kemeny which outperforms the other methods by a large margin albeit with a lot of variance. I believe the kemeny ranking is performing well due to our method of data generation. When we generate data, there is only one thing we take into account: the skill of the grader. Based on this one variable we either output a correct or incorrect pair. The kemeny ranking tries to minimise these incorrect pairs, assuming that most of the students marked correctly, the kemeny ranking should perform a lot better than the other methods. This is also why the BTL method performs so poorly. The BTL methods only takes into account the relative difference in skill between 2 students. In the data generation method, this is not taken into account explicitly. It also doesn't take into account the skill of the grade like in the RBTL and weighted borda methods.
+
+In the non-iterative graph, we can see that most of the methods perform similarly, with the exception of kemeny and BTL. When we look at the iterative graph we can see that the Iterative BTL
+
+# References
