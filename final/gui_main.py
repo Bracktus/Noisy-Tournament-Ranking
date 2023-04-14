@@ -19,7 +19,6 @@ Add user options
 import dearpygui.dearpygui as dpg
 import graphviz
 from math import floor
-from itertools import chain
 
 from classroom import Classroom
 from generate_tourney import TournamentGenerator
@@ -170,6 +169,7 @@ def save_matchups():
     n = len(classroom)
     e = dpg.get_value("Edges Input")
     pairs = fair_graph(n, e)
+    print(pairs)
 
     # Table Stuff
     if dpg.does_alias_exist("Edge Table"):
@@ -201,11 +201,11 @@ def update_avg_workload(num_students, edges):
     avg_workload = edges / num_students
     dpg.set_value("Workload String", f"Average Workload of student: {avg_workload}")
 
+nc2 = (inital_num_students * (inital_num_students - 1)) / 2
 with dpg.window(
     label="Matchup Generation", autosize=True, pos=(0, 300), no_close=True
 ) as secondary_window:
     with dpg.group(tag="Matchup Group"):
-        nc2 = (inital_num_students * (inital_num_students - 1)) / 2
         dpg.add_input_int(
             label="Number of Matchups",
             tag="Edges Input",

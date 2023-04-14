@@ -18,7 +18,7 @@ class Classroom:
         """
         Takes in a student number and return the probability of them marking a matchup correctly
         """
-        score = self.get_student_score(student)
+        score = self.grades[student]
         if not self.malicious:
             prob = score * 0.5 + 0.5
         else:
@@ -36,9 +36,6 @@ class Classroom:
 
         del self.grades[self.num_students - 1]
         self.num_students -= 1
-
-    def get_student_score(self, student):
-        return self.grades[student]
 
     def __len__(self):
         return self.num_students
