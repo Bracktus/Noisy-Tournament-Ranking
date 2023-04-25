@@ -4,8 +4,6 @@ from collections import defaultdict
 
 class TournamentGenerator:
     def __init__(self, classroom):
-        self.num_students = len(classroom)
-
         self.cache = defaultdict(list)
         self.iter_tourney = defaultdict(list)
         self.tournament_generated = False

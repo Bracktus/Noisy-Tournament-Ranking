@@ -6,14 +6,15 @@ graph {
     e[label=""]
     f[label=""]
 
+    b -- c
+    b -- d
+    b -- f
+
     a -- f
     a -- b
     a -- e
     a -- c
 
-    b -- c
-    b -- d
-    b -- f
 
     c -- d
     c -- e

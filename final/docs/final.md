@@ -54,21 +54,29 @@ In this case we get a cycle and it is unclear which team is the best. If the tou
 
 Various approaches such as have been used to solve this ranking problem. A survey in [@gonzalez-diaz_paired_2014] has applied Scores, Maximum Likelihood, Fair Bets, Least Squares, Recursive Bucholz and Generalised row sum methods to approach the problem.  
 
-Another perspective on this is that the tournament is made up of edges where each edge has a chance of being wrong (an upset occurred). Taking this view we can try to flip edges until we make the tournament acyclic. This is similar to the kemeny ranking method we use in  [@kenyon-mathieu_how_2007].
+Another perspective on this is that the tournament is made up of edges where each edge has a chance of being wrong (an upset occurred). Taking this view we can try to flip edges until we make the tournament acyclic. This is similar to the Kemeny ranking [@kenyon-mathieu_how_2007] method we use in section 6.4.
 
 Our project can be viewed as a variation of this concept. In sports, upsets can occur due to various external factors, leading to "noise" in the outcome. However, in our project, the "noise" is concentrated in the peer grader making the pairwise comparison.
 
-The other part of this project is paper distribution. We can think of paper distribution as assigning judges to matches. However, the pool of judges that we can pick from is also the pool of participants. This brings us to the problem of fair assignment. We don't want to assign a judge to their own match, and we must also must ensure that the number of matches each judge is assigend is fairly equal. To solve this we can look to the problem of edge colouring.
+The other part of this project is paper distribution. We can think of paper distribution as assigning judges to matches. However, the pool of judges that we can pick from is also the pool of participants. This brings us to the problem of fair assignment. We don't want to assign a judge to their own match, and we must also must ensure that the number of matches each judge is assigned is fairly equal. To solve this we can look to the problem of edge colouring.
 
 Edge Colouring is a graph colouring problem in which the edges of a graph are given a colour. In our case we also give the nodes a colour. The colouring rules are that a coloured edge may not be incident to a node of the same colour, and that for every pair of colours the number of edges assigned to both colours cannot differ by more than one. This also has applications outside of this project, for example it's used in register allocation for CPUs, scheduling problems and channel allocation in networks.
 
 ## Previous work
 
-Previous work has been done on cardinal, ordinal and pairwise grading.
+### Ordinal ranking
 
-For ordinal ranking there is peerrank [@walsh_peerrank_2014] which uses fixed point iteration over a grade matrix to estimate grades. This is resitant to malicious and poor graders. 
+Ordinal ranking is where students will assign a numerical score to student's work.
+
+CrowdGrader [de_alfaro_crowdgrader_2013] one such system. They developed an algorithm that would aggregate the grades provided by students into a concensus grade for each submission. The algorithm measures each student’s grading accuracy, by comparing the grades assigned by the student to the same grades assigned by other students on the same assignemnt. It gives more weight to the input of students with higher measured accuracy. The algorithm thus implements a reputation system for students, where higher accuracy leads to higher reputation, and to higher influence on the consensus grades.
+
+For ordinal ranking there is peerrank [@walsh_peerrank_2014]. This involves having a number of students grade every other student's work. We can put these grades into a grade matrix and use fixed point iteration to find the grades that are an eigenvector of the grade matrix. The grades found by this process fufill desireable properties such as unanimity and resistance to collusion.
+
+### Cardinal ranking
 
 For cardinal ranking, Raman and Joachims have used the Mallows Model, the Bradley-Terry Model and the Thurstone Model to varying success [@raman_methods_2014]. These are all probabilistic methods.
+
+### Pairwise ranking
 
 For pairwise ranking I've found some previous work that examines noisy rankings. One common method is to model the tournament with a Bradley-Terry Model and uses Maximum Likelihood Estimation to calculate skill levels for students [@shah_case_nodate] [@chen_pairwise_2013].
 
@@ -82,7 +90,9 @@ In terms of edge colouring, this paper [@januario_edge_2016] explores local sear
 
 Given a classroom of students, each student does a piece of homework. A student's score on the homework reflects their academic ability. However, since the class size is large the teacher is unable to mark all the work. 
 
-Next, we create a set of pairings of homeworks. We'll call these matchups. There will a number of these, at least one for each student. Every time a matchup is given to a student we'll call this an assignment.
+Next, we create a set of pairings of homeworks. We'll call these matchups. Every time a matchup is given to a student we'll call this an assignment.
+
+For each matchup assigned to a player, the player will make a decision about who they think achieved a higher score on the homework. 
 
 The students will now make comparisons in quality between each of their assigned matchups. They may make the correct or incorrect decision, but we assume they're trying their best to mark the pairings correctly. 
 
@@ -126,7 +136,7 @@ The correct assessment would be $(v_{i}, v_{j}, v_{k}) \text{ iff } t(v_{j}) \ge
 
 Given $V, E, A, A'$ find a relation $\preceq_{t'}$ such that the preorder defined by $\preceq_{t'}$ is 'close to' the preorder defined by $\preceq_{t}$, the ground truth. We will define this closeness metric in the evaluation section. 
 
-If we're able to choose $E$ and $A$, then we can create them in such a way that finding an accurate $\preceq_{t'A}$ is easier.
+If we're able to choose $E$ and $A$, then we can create them in such a way that finding an accurate $\preceq_{t'}$ is easier.
 
 ### Example 
 
@@ -157,7 +167,7 @@ $$ b \prec_{t} d \prec_{t} a \prec_{t} c $$
 
 ## Solution overview
 
-To solve this problem I've broken it down into 6 steps. If we already have the set of marked matchups, then we can go ahead and skip to the ranking methods.
+To solve this problem I've broken it down into 5 steps. If we already have the set of marked matchups, then we can go ahead and skip to the ranking methods.
 
 1. If we already have $A'$, go to step 5
 2. Generate matchups (Create $E$)
@@ -171,11 +181,11 @@ We want to generate a graph $G = (V, E)$. This represents the second step of our
 
 We want to 
 
-1. Choose the number of edges.
+1. Be able to select exactly $k$ edges where $k \leq \binom{|V|}{2}$
 2. Have it be connected.
 3. Keep the degrees of each node equal.
 
-Condition 1 is there because we want to be able to control the total number of pairings. This makes it easier to perform experiments and make comparisons between ranking methods.
+Condition 1 is there because we want to be able to select the total number of pairings. This makes it easier to perform experiments and make comparisons between ranking methods. It also let's us parametrise the workload for students.
 
 A connected graph is a graph in which for every node, there is a path from it to every other node. Condition 2 is required to ensure that we don't have isolated subgraphs where we can't compare students to the main cohort. In the diagram below, we can see that we can obtain $a, b, c$ ranking relative to each other but we can't compare them to the rest of the students. 
 
@@ -185,7 +195,7 @@ Every time we have an edge incident to a node we gain some level of information 
 
 ## Method 1 - Regular Graphs
 
-A $k$-regular graph is a graph in which every node has the same number of neighbours. 
+A $k$-regular graph is a graph in which every node has $k$ neighbours.
 
 Given $n$ nodes, a $k$-regular graph only exists if $kn$ is even and $n \geq k + 1$ [@ganesan_existence_2018].
 
@@ -207,14 +217,13 @@ If $k$ is odd and $nk$ must be even, then $n$ must be even. The opposite vertex 
 If $k \geq 2$, then for each node, it will be connected to its nearest 2 neighbours. Therefore, every graph where $k \geq 2$ generated with this method will have a cycle as a subgraph and will be connected, satisfying condition 1.
 
 Condition 3 is fulfilled since every node has the same degree. 
-
 Condition 1 is a bit tricky. $|E|$, the number of edges is bounded by $2 \leq |E| \leq \frac{1}{2} n(n - 1)$ because it must greater than 2 to be connected. Also, the complete graph is a $k$-regular graph, where $k = n - 1$. So on this front, it's fine.
 
 However, every $k$-regular graph has $nk/2$ edges. Since $|E| = nk/2$, we cannot have $r$ edges, where $k_{1} < r < k_{2}$ and $k_{1}, k_{2}$ are multiples of $n/2$. $|E|$ must be a multiple of $k/2$ which limits our control.
 
 For example, given the graph $k=3, n=6, |E|=9$, and the graph $k=4, n=6, |E|=12$. We can see that $9 < |E| < 12$ is impossible while keeping $n$ fixed.
 
-Therefore, we find that conditions 2 and 4 are incompatible. We'll want to keep condition 2, but perhaps we can relax condition 4.
+Therefore, we find that conditions 1 and 3 are incompatible. Wcan keep condition 2, but perhaps we can relax condition 3.
 
 ## Method 2 - Iterative Graph building
 
@@ -238,9 +247,7 @@ Condition 2 is satisfied in step 3 as it creates a cycle which is connected.
 
 For condition 3, it doesn't work. For example, if $k=9$, and we've done 13 iterations, we can see that $deg(4) = 6,\, deg(8) = 4$. The 2 nodes have differing degrees. 
 
-However, the difference between the maximum and the minimum degree is bounded by 2 no matter when we stop adding edges.
-
-This is because at every $n$ iterations of our algorithm, we can only create 2 new edges for every node. So we'll modify condition 4 to be: The difference between the maximum degree and the minimum degree of the nodes should be at most 2.
+However, the difference between the maximum and the minimum degree is always bounded by 2. This is because at any $n$ iterations of our algorithm, we can only create 2 new edges for every node. So we'll modify condition 4 to be: The difference between the maximum degree and the minimum degree of the nodes should be at most 2.
 
 One thing to note is that after $\frac{n(n-1)}{2} - n$ iterations we arrive at the complete graph. Therefore, we need to add a condition in step 5 to check if there are no more edges to add, if so, then we terminate and return.
 
@@ -277,7 +284,7 @@ Then player 2 is marking a lot more matchups than player 1 which is an unfair wo
 
 **Condition 3.**
 
-If we assume the information on a student $v$ to be a measure of how many good graders have marked their matchup it becomes difficult to satisfy this. After all, how can we identify the good graders before we've ranked the students? If we take the grading skill out of the equation, then we can measure this by the number of times student $v$ appears in $E$. Taking this, we can satisfy this condition by constructing $E$ such that each student appears in $E$ a roughly equal amount of times.
+If we assume the information on a student $v$ to be a measure of how many good graders have marked their matchup it becomes difficult to satisfy this. After all, how can we identify the good graders before we've ranked the students? If we take the grading skill out of the equation, then we can measure this by the number of times student $v$ appears in $E$. Taking this, we can satisfy this condition by constructing $E$ such that each student appears in $E$ a roughly equal amount of times. This was handled in section 4.
 
 There's also the group of students that mark the papers of a select student. Let's say player 2 is assigned the matchups: (1,3), (3, 5), (3, 4) and (6, 3). In this case, a lot of player 3's matches are concentrated in player 2's hands. If player 2 is a poor student then we will not have much useful information to infer player 3's skill.
 
@@ -394,6 +401,8 @@ Next, we'll use $WinCount(a)$ as our ranking function $t'$ to obtain a preorder 
 
 $$a \preceq_{t'} b \text{ iff } WinCount(a) \leq WinCount(b)$$
 
+There is an issue with this method. Suppose we have a grader $d$ who evaluates 2 matchups, $(a, b)$ and $(b, c)$. He gives the evaluation $a > b$ and $b > c$. $a$ and $b$ would both have 1 point despite $a$ being the student saying $a$ was better.
+
 ### Example:
 
 $$V = \{a, b, c, d, e\}$$
@@ -432,6 +441,8 @@ With a low number of students ties are common, as we increase the size of $V$, w
 ![A visualisation of $A'$. You can also calculate $WinCount(n)$ by calculating $outdegree(n)$](./figures/fig3.svg){width=55mm}
 
 ## Borda Count
+
+Borda Count can be thought of as a modification of the win count method that also takes into account a student's losses.
 
 With Borda count [@brandt_handbook_nodate], we're given a set of candidates and a set of ballots. Each ballot contains a linear ordering of the candidates. If a ballot $j$ ranks candidate $a$ over candidate $b$, then we can write $a \succ_{j} b$.
 
@@ -518,7 +529,7 @@ The ranking would be $\{b, d, e\} \preceq_{t'} a \preceq_{t'} c$.
 
 ## Weighted Borda Count 
 
-Weighted borda score involves weighting each decision $j \succ_{A'_{i}} k$ with the skill level of the grader $i$. 
+Weighted Borda score involves weighting each decision $j \succ_{A'_{i}} k$ with the skill level of the grader $i$. 
 
 First define a function $idx_{\preceq_{t'}}: V \rightarrow \{1, 2 \dots, n\}$ that maps each grader to their place in the ranking. 
 
@@ -534,7 +545,7 @@ $$w_{v} = \frac{idx_{\preceq_{t'}}(v)}{n}$$
 
 The rationale behind this is that higher scoring students are likely to be better graders. We divide by $n$ so that the weights are in the range $[0,1]$.
 
-Finally, we can define our version of the weighted borda count.
+Finally, we can define our version of the weighted Borda count.
 
 $$
 j \succ_{A'_{i}} k = \begin{cases}
@@ -548,11 +559,11 @@ $$Net_{A'}(j > k) = \sum_{i \in V} j \succ_{A'_{i}} k$$
 
 $$WeightedBorda(j) = \sum_{k \in V} Net_{A'}(j > k)$$
 
-Once we obtain the ranking defined by the weighted borda count, we can run this procedure again on it's own output until we either we converge to a ranking or we hit a maximum number of iterations.
+Once we obtain the ranking defined by the weighted Borda count, we can run this procedure again on it's own output until we either we converge to a ranking or we hit a maximum number of iterations.
 
 ### Example:
 
-First, let's get our relation defined by the unweighted borda count.
+First, let's get our relation defined by the unweighted Borda count.
 
 $$
 \begin{aligned}
@@ -697,7 +708,7 @@ So to put it all together:
 $$\hat{\theta} = \argmax_{\theta \in \Theta} \mathcal{L}(\theta)$$
 $$a \preceq_{t'} b \text{ iff } w_{a}^{\hat{\theta}} \leq w_{b}^{\hat{\theta}}$$
 
-Note that this method and all of the previous methods, (barring weighted borda) do not take into account who's grading the matchups. We'll rectify that in the next ranking method.
+Note that this method and all of the previous methods, (barring weighted Borda) do not take into account who's grading the matchups. We'll rectify that in the next ranking method.
 
 ### Example:
 
@@ -774,7 +785,7 @@ Here I'll outline the basic steps of our iterative matchup distribution algorith
 3. Calculate a score for the skill of every student, based on the previous ranking $\preceq_{t'_{k-1}}$
 4. Calculate a score for the skill of every matchup, based on the previous ranking $\preceq_{t'_{k-1}}$
 5. Assign matchups (Create $A$). If this is the first pass, then use the non-iterative matchup assigner. Otherwise, use the iterative one.
-6. Give matchups to studenst and ask them to mark (Obtain $A'$)
+6. Give matchups to students and ask them to mark (Obtain $A'$)
 7. Apply one of the ranking methods, RBTL, Kemeny... (Obtain the current ranking $\preceq_{t'_{k}}$)
 8. Until we've hit the desired amount of iterations, return to step 1.
 
@@ -810,7 +821,7 @@ def random_cycle(nodes):
 
 In steps 3 and 4 we estimate skill for players and uncertainty for matchups based on the previous ranking $\preceq_{t'_{k-1}}$
 
-For skill $w$ we can reuse the definition from the weighted borda count.
+For skill $w$ we can reuse the definition from the weighted Borda count.
 
 $$w_{v} = \frac{idx_{\preceq_{t'_{k-1}}}(v)}{n}$$
 
@@ -846,9 +857,29 @@ If $\forall j,k \in V, (j,k) \in \preceq_{t'} \wedge \, (k,j) \in \preceq_{t'}$ 
 
 Each time this is run, it'll have no memory of the previous passes. Therefore, it may give out duplicate assignments. To avoid this, we'll store all previous assignments and prevent those decision variables from being created.
 
+### Possible improvements
+
+Currently we use the ILP to match up the most uncertain pairs with the strongest students. However, we can only choose from the edges formed in $E$ that were randomly chosen. Therefore, there will be edges that aren't in $E$ that have a higher uncertainty score.
+
+Let's take the ranking:
+
+$$a \preceq_{t'_{k - 1}} b \preceq_{t'_{k - 1}} c \preceq_{t'_{k - 1}} d \preceq_{t'_{k - 1}} e$$
+
+It's clear that from our definition of uncertainty, the most uncertain pairs are $(a, b), (b, c), (c, d), (d, e)$. This gives us a simple cycle graph $E$[^3] we can use for the next iteration.
+
+[^3]: If we also add the least uncertain edge $(e, a)$.
+
+However, a problem arises if we receive the same or similar rankings on the next iteration. In these cases it's unclear how balance choosing the most uncertain matchups and avoiding repeated matchups. 
+
 ### Side note: Brute force solution 
 
-A cycle graph has a simple structure. A valid assignment over the graph, without taking into account conditions 2 and 3 from ['Additional restrictions on $A$'](#Additional restrictions on $A$), is a graph in which each edge is labelled. The set of labels is the same as the set of vertices $V$. Each label must be used once, and if an edge is incident to a vertex $v$, then the edge cannot be labelled with $v$.
+A cycle graph has a simple structure. A valid assignment over the graph, without taking into account conditions 2 and 3 from section 5.1, is a graph in which each edge is labelled. 
+
+If we wanted to find the optimal assignment through brute force, then we must enumerate over all possible solutions. Here we'll calculate the size of the solution space.
+
+The set of labels is the same as the set of vertices $V$.
+
+Each label must be used once, and if an edge is incident to a vertex $v$, then the edge cannot be labelled with $v$.
 
 For a cycle graph, the number of possible assignments of students can be described by the number of permutations $s$ of the sequence $0, 1, \dots n - 1$, such that $s[i] \neq i$ and $s[i] \neq i + 1 \mod n$ for all $i$.
 
@@ -1015,7 +1046,7 @@ I've split my program into 5 core modules:
 
 Next the `graph_utils.py` module is used to generate a graph $G = (V, E)$. This contains the graph generation algorithm I described in section 4.2. Instead of the traditional adjacency list/matrix representations of graphs, we just use a set of 2-tuples.[^2] 
 
-[^2]: This keeps the implementation close to the theory and is much simpler than the other data structures. The main reason we don't use these other representations is that they aren't necessary, the advantages of adjacency lists/matricies over my approach are quick lookup of neighbours. We never need to perform this operation so this isn't relevant. As a results, we gain a more memory efficient $O(E)$ representation. 
+[^2]: This keeps the implementation close to the theory and is much simpler than the other data structures. The main reason we don't use these other representations is that they aren't necessary, the advantages of adjacency lists/matrices over my approach are quick lookup of neighbours. We never need to perform this operation so this isn't relevant. As a results, we gain a more memory efficient $O(E)$ representation. 
 
 This graph is passed into the `distribute_papers.py` module to run our MIP model for matchup assignment. These assignments are represented by another dictionary. 
 
@@ -1054,30 +1085,35 @@ Therefore, the normalised Kendall tau distance $K_{n}$ is
 
 $$K_{n} = \frac{K_{d}}{\frac{n(n-1)}{2}} = \frac{2K_{d}}{n(n - 1)}$$
 
-The reason for normalisation is to allow for comparisons between runs where $n$ differs. The kendall tau distance for a large $n$ with $k$ differing pairs should be lower than the kendall tau distance for a small $n$ with $k$ differing pairs.
+The reason for normalisation is to allow for comparisons between runs where $n$ differs. The Kendall tau distance for a large $n$ with $k$ differing pairs should be lower than the Kendall tau distance for a small $n$ with $k$ differing pairs.
 
-## Analysis
+## General Analysis
 
 ![Comparison of voting methods for $|V| = 10, 15, 20$](./figures/results.svg)
 
-In figure 7 we can see the kendall-tau scores for our different voting methods. On the x-axis we get the number of matchups per student. For example, if the number of matchups per student is 7, and there are 15 students, then there are $7 \times 15 = 105$ matchups in total.
+In figure 7 we can see the Kendall tau scores for our different voting methods. On the x-axis we get the number of matchups per student. For example, if the number of matchups per student is 7, and there are 15 students, then there are $7 \times 15 = 105$ matchups in total.
 
 As a general trend we can see that in the iterative case, it only gets more and more accurate as we increase the number of matchups. This could be explained by the fact that as we add more matchups, we gain more information about the students and can therefore make a better assessment of their relative rankings.
 
-For the non-iterative case, something odd happens. Initially, we get a downward trend akin to the iterative case. However, at a certain point the score plateaus, with the exception of the kemeny score.
+For the non-iterative case, something odd happens. Initially, we get a downward trend akin to the iterative case. However, at a certain point the score plateaus, with the exception of the Kemeny score.
 
 The explanation of this lies in the amount of information available to the non-iterative case. As we recall, in the non-iterative case, each edge in the graph is assigned to one student. This means that when we arrive at the complete graph, we can no longer obtain any more information since no more assignments are possible. To confirm this, take a look at $|V| = 15$ in the non-iterative case. We can see that it begins to plateau around the '7 papers per student' mark. $7 \times 15 = \binom{15}{2} = 105$.
 
-The kemeny ranking method doesn't plateau though. This is due to the way we calculate the kemeny ranking. Simulated annealing is not deterministic, it uses random numbers and can often produce better or worse outcomes even with the same hyperparameters. Therefore, the variation we see in the kemeny ranking comes down to the non-deterministic nature of simulated annealing. If we were to calculate the actual kemeny ranking (which is NP-hard), then the graph would exhibit the same plateauing behaviour.
+The Kemeny ranking method doesn't plateau though. This is due to the way we calculate the Kemeny ranking. Simulated annealing is not deterministic, it uses random numbers and can often produce better or worse outcomes even with the same hyperparameters. Therefore, the variation we see in the Kemeny ranking comes down to the non-deterministic nature of simulated annealing. If we were to calculate the actual Kemeny ranking (which is NP-hard), then the graph would exhibit the same plateauing behaviour.
 
 An additional result we find is that is that the rankings become more accurate as the number of students increase. This is probably due to the fact that we can obtain more information in general. The number of edges available to mark is $\binom{n}{2}$ in the non-iterative case and $(\binom{n}{2} - (n - 1)) \cdot n$ in the iterative case where $n = |V|$. Therefore, as the number of edges available increases, we'll gain more information and therefore get more accurate rankings.
 
-![Comparison of voting methods for $|V| = 30$](./figures/results_2.svg)
+![Comparison of voting methods for $|V| = 30$](./figures/results_2.svg) 
 
 Let's take a closer look at the ranking methods themselves. In figure 8, we see the results for a classroom of 30 students. To make a like for like comparison between non-iterative and iterative methods we should only look at data points before '15 papers per student'.
 
-Looking at the two graphs we can see that both methods perform similarly up to this point with the exception of non-iterative kemeny which outperforms the other methods by a large margin albeit with a lot of variance. I believe the kemeny ranking is performing well due to our method of data generation. When we generate data, there is only one thing we take into account: the skill of the grader. Based on this one variable we either output a correct or incorrect pair. The kemeny ranking tries to minimise these incorrect pairs, assuming that most of the students marked correctly, the kemeny ranking should perform a lot better than the other methods. This is also why the BTL method performs so poorly. The BTL methods only takes into account the relative difference in skill between 2 students. In the data generation method, this is not taken into account explicitly. It also doesn't take into account the skill of the grade like in the RBTL and weighted borda methods.
+Looking at the two graphs we can see that both methods perform similarly up to this point with the exception of non-iterative Kemeny which outperforms the other methods by a large margin albeit with a lot of variance. I believe the Kemeny ranking is performing well due to our method of data generation. When we generate data, there is only one thing we take into account: the skill of the grader. Based on this one variable we either output a correct or incorrect pair. The Kemeny ranking tries to minimise these incorrect pairs, assuming that most of the students marked correctly, the Kemeny ranking should perform a lot better than the other methods. This is also why the BTL method performs so poorly. The BTL methods only takes into account the relative difference in skill between 2 students. In the data generation method, this is not taken into account explicitly. It also doesn't take into account the skill of the grade like in the RBTL and weighted Borda methods.
 
-In the non-iterative graph, we can see that most of the methods perform similarly, with the exception of kemeny and BTL. When we look at the iterative graph we can see that the Iterative BTL
+In the non-iterative graph, we can see that most of the methods perform similarly, with the exception of Kemeny and BTL. When we look at the iterative graph we can see that the Iterative BTL performs worse than average which lines up with our analysis of the method. 
+
+
+If we give each student every matchup excluding their own matches the we can see that all methods (excluding Kemeny) perform very well almost reaching the original ranking. 
+
+![Rankings under (almost) complete information](./figures/results_3.svg)
 
 # References
