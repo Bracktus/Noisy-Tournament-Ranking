@@ -3,7 +3,7 @@ from collections import defaultdict
 import pulp as pl
 
 class PaperDistributor:
-    def __init__(self, n, pairs=None):
+    def __init__(self, n, pairs=None, toggle=False):
         self.prob = pl.LpProblem("Paper_Distribution", pl.LpMinimize)
         self.formulated = False
         self.solved = False
@@ -14,6 +14,7 @@ class PaperDistributor:
             # If there aren't a list of pairs, then we just select all of them
             self.pairs = pl.combination(self.students, 2)
         self.choices = {}  # This will contain our decision variables
+        self.toggle = toggle
 
     def _formulate_model(self):
         valid_match = lambda m: m[0] != m[1][0] and m[0] != m[1][1]
@@ -63,17 +64,20 @@ class PaperDistributor:
             self.prob += abs_var >= pl.lpSum(sum2) - pl.lpSum(sum1)
             self.prob += abs_var <= 1
 
-        c = pl.LpVariable("c", lowBound=0, cat="Integer")
-        for asins in student_contains.values():
-            # Every student marks an amount of another student's paper.
-            # For example for the assignment:
-            # a:[(b,c), (c, d)]
-            # (a,b) = 1, (a,c) = 2 and (a,d) = 1 since a marks c's paper twice
-            # So here were looping over all such combinations and setting c to be the maximum of these values
-            self.prob += pl.lpSum(asins) <= c
+        if not self.toggle:
+            c = pl.LpVariable("c", lowBound=0, cat="Integer")
+            for asins in student_contains.values():
+                # Every student marks an amount of another student's paper.
+                # For example for the assignment:
+                # a:[(b,c), (c, d)]
+                # (a,b) = 1, (a,c) = 2 and (a,d) = 1 since a marks c's paper twice
+                # So here were looping over all such combinations and setting c to be the maximum of these values
+                self.prob += pl.lpSum(asins) <= c
 
-        # C is our objective function that we're trying to minimise
-        self.prob += c
+            # C is our objective function that we're trying to minimise
+            self.prob += c
+        else:
+            self.prob += 0
         self.formulated = True
 
     def _solve(self, show_msg=False):
