@@ -45,17 +45,20 @@ classroom = Classroom(inital_num_students)
 pairs = None
 assignments = None
 
+
 def get_img_tag():
     num = 0
     while True:
         yield (f"img_{num - 1}", f"img_{num}")
         num += 1
 
+
 tag_gen = get_img_tag()
 
 # ---------GLOBAL STATE END --------------
 
 dpg.create_context()
+
 
 def set_classroom(_, app_data):
     global classroom
@@ -69,7 +72,7 @@ def set_classroom(_, app_data):
             classroom.add_student()
             row_id = old_size + i
             classroom_row(row_id)
-            
+
     elif new_size < old_size:
         num_to_del = old_size - new_size
         for i in range(num_to_del):
@@ -90,7 +93,6 @@ def set_classroom(_, app_data):
 
 
 def classroom_row(grade_id):
-
     def set_val(_, app_data):
         classroom.grades[grade_id] = app_data
 
@@ -98,7 +100,7 @@ def classroom_row(grade_id):
         dpg.add_text(str(grade_id))
         dpg.add_input_double(
             default_value=classroom.grades[grade_id],
-            step=0, #Disable +/- buttons
+            step=0,  # Disable +/- buttons
             min_clamped=True,
             max_clamped=True,
             min_value=0,
@@ -106,6 +108,7 @@ def classroom_row(grade_id):
             callback=set_val,
             width=-1,
         )
+
 
 with dpg.window(
     label="Classroom Generation", autosize=True, pos=(0, 0), no_close=True
@@ -124,11 +127,12 @@ with dpg.window(
         dpg.add_table_column(label="Test Score")
         for i in range(inital_num_students):
             classroom_row(i)
-            
-#---------------------
+
+
+# ---------------------
 def gen_graph():
     if pairs == None:
-        return 
+        return
 
     with dpg.window(
         on_close=lambda sender: dpg.delete_item(sender),
@@ -201,6 +205,7 @@ def update_avg_workload(num_students, edges):
     avg_workload = edges / num_students
     dpg.set_value("Workload String", f"Average Workload of student: {avg_workload}")
 
+
 nc2 = (inital_num_students * (inital_num_students - 1)) / 2
 with dpg.window(
     label="Matchup Generation", autosize=True, pos=(0, 300), no_close=True
@@ -231,12 +236,8 @@ def assign_students():
     n = len(classroom)
     distributor = dp.PaperDistributor(n, pairs)
 
-    # Create loading label 
-    dpg.add_text(
-        "Loading...",
-        tag="Loading Text",
-        parent="Assignment Control Group"
-    )
+    # Create loading label
+    dpg.add_text("Loading...", tag="Loading Text", parent="Assignment Control Group")
 
     assignments = distributor.get_solution()
 
@@ -261,21 +262,28 @@ def assign_students():
                 id_num += 1
 
 
-with dpg.window(label="Assignment", autosize=True, pos=(400, 0), no_close=True) as tertiary_window:
+with dpg.window(
+    label="Assignment", autosize=True, pos=(400, 0), no_close=True
+) as tertiary_window:
     with dpg.group(horizontal=True, tag="Assignment Control Group"):
         dpg.add_button(label="Assign Students", callback=assign_students)
         dpg.add_text("Warning, this operation may take a while.")
 
-
     dpg.add_group(tag="Assignment Table Group")
 
-#-----------------------
+# -----------------------
 
 # Error message - Hidden by default
-with dpg.window(label="Delete Files", modal=True, show=False, tag="modal_id", no_title_bar=True):
+with dpg.window(
+    label="Delete Files", modal=True, show=False, tag="modal_id", no_title_bar=True
+):
     dpg.add_text("Please ensure that assignements is set")
     with dpg.group(horizontal=True):
-        dpg.add_button(label="OK", width=75, callback=lambda: dpg.configure_item("modal_id", show=False))
+        dpg.add_button(
+            label="OK",
+            width=75,
+            callback=lambda: dpg.configure_item("modal_id", show=False),
+        )
 
 
 def run_rankers():
@@ -286,7 +294,7 @@ def run_rankers():
         # If the number of assignements doesn't match the number of pairs
         dpg.configure_item("modal_id", show=True)
         return
-    
+
     tourney_gen = TournamentGenerator(classroom)
     acc = {}
 
@@ -294,20 +302,16 @@ def run_rankers():
     if dpg.does_alias_exist("Results Table"):
         dpg.delete_item("Results Table")
 
-    # Create loading label 
-    dpg.add_text(
-        "Loading...",
-        tag="Loading Text Results",
-        parent="Ranking Group"
-    )
-    
-    # This is quite messy, however because iterative tournaments do not share 
+    # Create loading label
+    dpg.add_text("Loading...", tag="Loading Text Results", parent="Ranking Group")
+
+    # This is quite messy, however because iterative tournaments do not share
     # the exact assignments, they must be ran first
     for method in RANKING_METHODS:
         if dpg.get_value(f"iter_{method}_checkbox"):
             ranking_func = RANKING_METHODS[method]
             n = len(classroom)
-            rounds = floor(len(pairs)/n)
+            rounds = floor(len(pairs) / n)
             results = run_iter(n, rounds, ranking_func, tourney_gen)
             acc[f"Iterative {method}"] = results
 
@@ -324,9 +328,9 @@ def run_rankers():
 
     # Recreate the table
     with dpg.table(
-            tag="Results Table",
-            parent="Ranking Group",
-            policy=dpg.mvTable_SizingStretchProp
+        tag="Results Table",
+        parent="Ranking Group",
+        policy=dpg.mvTable_SizingStretchProp,
     ):
         dpg.add_table_column(label="Method")
         dpg.add_table_column(label="Ranking")
@@ -342,29 +346,26 @@ def run_rankers():
 
     dpg.delete_item("Loading Text Results")
 
-with dpg.window(label="Ranking", autosize=True, pos=(400,200), no_close=True) as quaternary_window:
+
+with dpg.window(
+    label="Ranking", autosize=True, pos=(400, 200), no_close=True
+) as quaternary_window:
     with dpg.group(tag="Ranking Group"):
         for i, method in enumerate(RANKING_METHODS):
             with dpg.group(horizontal=True):
-
                 dpg.add_checkbox(
-                    label=method,
-                    tag=f"{method}_checkbox",
-                    default_value=True
+                    label=method, tag=f"{method}_checkbox", default_value=True
                 )
 
                 dpg.add_checkbox(
                     label=f"Iterative {method}",
                     tag=f"iter_{method}_checkbox",
-                    default_value=False
+                    default_value=False,
                 )
 
-    dpg.add_button(
-        label="Run ranking methods",
-        callback=run_rankers
-    )
+    dpg.add_button(label="Run ranking methods", callback=run_rankers)
 
-#-----------------------
+# -----------------------
 
 dpg.create_viewport(title="Tournament Ranking")
 dpg.setup_dearpygui()

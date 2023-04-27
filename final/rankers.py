@@ -47,10 +47,12 @@ def copeland(tournament, weights=None):
     ranking = [student for (student, _) in ranking]
     return ranking
 
+
 def weighted_borda(tournament):
     ranking = copeland(tournament)
     weights = ranking_to_weights(ranking)
     return copeland(tournament, weights)
+
 
 def kemeny(tournament):
     """
@@ -63,10 +65,10 @@ def kemeny(tournament):
     ranking = calculate_kemeny(
         inital_solution=inital_sol,
         tourney=matchups,
-        initial_temperature=0.9,
-        temperature_length=100,
+        initial_temperature=0.99,
+        temperature_length=1000,
         cooling_ratio=0.99,
-        num_non_improve=1000000,
+        num_non_improve=5000000,
     )
     return ranking
 

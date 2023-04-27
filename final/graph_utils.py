@@ -22,7 +22,7 @@ def fair_graph(n, e):
     Iterative builds up a graph with n nodes and e edges.
     The maximum degree - minimum degree will always be less than 3.
     """
-    max_edges = (n*(n - 1))/2
+    max_edges = (n * (n - 1)) / 2
     e = min(e, max_edges)
 
     # Create a cycle

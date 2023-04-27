@@ -19,11 +19,13 @@ fields = [
     "KEMENY",
     "BORDA",
     "WEIGHTED BORDA",
-    "WIN COUNT"
+    "WIN COUNT",
 ]
 
+
 def get_num_edges(n):
-    return (n*(n - 1))/2
+    return (n * (n - 1)) / 2
+
 
 n = 5
 classroom = Classroom(n, malicious=False)
@@ -39,9 +41,9 @@ while n < 30:
     for student in range(n):
         valid_match = lambda v: v[0] != student and v[1] != student
         asins[student] = [s for s in graph if valid_match(s)]
-        
+
     tourney = tourney_generator.generate_tournament(asins)
-    
+
     res_real = classroom.get_true_ranking()
     res_rbtl = rk.rbtl(tourney)
     res_btl = rk.btl(tourney)
@@ -49,7 +51,7 @@ while n < 30:
     res_borda = rk.copeland(tourney)
     res_w_borda = rk.weighted_borda(tourney)
     res_win_count = rk.win_count(tourney)
-    
+
     row = [
         n,
         kendall_tau(res_real, res_rbtl),
@@ -57,7 +59,7 @@ while n < 30:
         kendall_tau(res_real, res_kem),
         kendall_tau(res_real, res_borda),
         kendall_tau(res_real, res_w_borda),
-        kendall_tau(res_real, res_win_count)
+        kendall_tau(res_real, res_win_count),
     ]
 
     print(row)
@@ -67,7 +69,6 @@ while n < 30:
     classroom.add_student()
 
 with open(f"complete_information.csv", "w") as csvfile:
-        csvwriter = csv.writer(csvfile)
-        csvwriter.writerow(fields)
-        csvwriter.writerows(rows)
-
+    csvwriter = csv.writer(csvfile)
+    csvwriter.writerow(fields)
+    csvwriter.writerows(rows)

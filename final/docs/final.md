@@ -447,7 +447,7 @@ With Borda count [@brandt_handbook_nodate], we're given a set of candidates and 
 
 The net preference for $a$ over $b$ is defined as:
 
-$$Net(a > b) = |\{j \in N | a \succ_{j} b\}| - \{j \in N | b \succ_{j} a\}|$$
+$$Net(a > b) = |\{j \in N | a \succ_{j} b\}| - |\{j \in N | b \succ_{j} a\}|$$
 
 Where $N$ is the set of ballots.
 
@@ -639,7 +639,9 @@ $$Kemeny(\preceq_{t'}, B) = \sum_{(i, j) \in \preceq_{t'}} B_{i,j} - B_{j,i}$$
 
 In our case, we don't have ballots, but we do have the pairwise comparisons needed to create the matrix. We reuse the $Net$ operation we defined for the (unweighted) Borda count to perform the same operation.
 
-$$Kemeny(\preceq_{t'}, A') = \sum_{(i, j) \in \preceq_{t'}} Net_{A'}(i > j) - Net_{A'}(j > i)$$
+$$Net(a > b) = |\{j \in N | a \succ_{j} b\}| - |\{j \in N | b \succ_{j} a\}|$$
+
+$$Kemeny(\preceq_{t'}, A') = \sum_{(i, j) \in \preceq_{t'}} Net_{A'}(i > j)$$
 
 Next, we have to enumerate through all possible rankings to find the ranking that maximises the Kemeny score. That ranking will be the Kemeny ranking. However, now we have a problem there are $n!$ possible rankings (where $n$ is the length of the ranking). As $n$ grows larger this will be computationally intractable.
 
@@ -679,8 +681,8 @@ $$
 
 $$
 \begin{aligned}
-Kemeny(\preceq_{t'}, A') =& \sum_{(i, j) \in \preceq_{t'}} Net_{A'}(i > j) - Net_{A'}(j > i) \\
-=& \, [Net_{A'}(c > a) - Net_{A'}(a > c)] + \dots + [Net_{A'}(e > e) - Net_{A'}(e > e)] \\
+Kemeny(\preceq_{t'}, A') =& \sum_{(i, j) \in \preceq_{t'}} Net_{A'}(i > j) \\
+=& \, Net_{A'}(c > a) + \dots + Net_{A'}(e > e) \\
 =& \, 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 - 1 + 1 \\
 =& \, 8
 \end{aligned}
@@ -892,9 +894,7 @@ Let's take the ranking:
 
 $$a \preceq_{t'_{k - 1}} b \preceq_{t'_{k - 1}} c \preceq_{t'_{k - 1}} d \preceq_{t'_{k - 1}} e$$
 
-It's clear that from our definition of uncertainty, the most uncertain pairs are $(a, b), (b, c), (c, d), (d, e)$. This gives us a simple cycle graph[^3] $E$ we can use for the next iteration.
-
-[^3]: If we also add the least uncertain edge $(e, a)$.
+It's clear that from our definition of uncertainty, the most uncertain pairs are $(a, b), (b, c), (c, d), (d, e)$. This gives us a simple cycle graph (if we also add the least uncertain edge $(e, a)$) $E$ we can use for the next iteration.
 
 However, a problem arises if we receive the same or similar rankings on the next iteration. In these cases it's unclear how balance choosing the most uncertain matchups and avoiding repeated matchups. 
 
@@ -1071,17 +1071,156 @@ I've split my program into 5 core modules:
 
 `classroom.py` contains a single class (in the OOP sense). It creates a dictionary of students, assigns them grades and sets up an interface for editing the dictionary.
 
-Next the `graph_utils.py` module is used to generate a graph $G = (V, E)$. This contains the graph generation algorithm I described in section 4.2. Instead of the traditional adjacency list/matrix representations of graphs, we just use a set of 2-tuples.[^2] 
+Next the `graph_utils.py` module is used to generate a graph $G = (V, E)$. This contains the graph generation algorithm I described in section 4.2. Instead of the traditional adjacency list/matrix representations of graphs, we just use a set of 2-tuples.
 
-[^2]: This keeps the implementation close to the theory and is much simpler than the other data structures. The main reason we don't use these other representations is that they aren't necessary, the advantages of adjacency lists/matrices over my approach are quick lookup of neighbours. We never need to perform this operation so this isn't relevant. As a results, we gain a more memory efficient $O(E)$ representation. 
+By using 2-tuples we keep the implementation close to the theory and much simpler than the other data structures. The main reason we don't use these other representations is that they aren't necessary, the advantages of adjacency lists/matrices over my approach are quick lookup of neighbours. We never need to perform this operation so this isn't relevant. As a results, we gain a more memory efficient $O(E)$ representation. 
 
 This graph is passed into the `distribute_papers.py` module to run our MIP model for matchup assignment. These assignments are represented by another dictionary. 
 
 This assignment dictionary and the classroom object is then passed into `generate_tourney.py` where the synthetic data $A'$ is created. Finally a bunch of functions (ranking methods) in `rankers.py` take these assignments and return a ranking.
 
-I've mainly used an OOP style mixed with a few pure functions where using a class was overkill. 
+I've mainly used an OOP style mixed with a few pure functions where using a class was overkill. With the classes, I've opted to use dependency injection in most places to keep in line with 'single responsibility principle'.
+
+This style also allowed me to quickly build up my GUI once I had finished the command line version. Each button is linked to a function of one of the modules, all the state is encapsulated in these classes so the GUI code is relatively simple. 
+
+```Python
+from itertools import product
+from collections import defaultdict
+import pulp as pl
+
+class PaperDistributor:
+    def __init__(self, n, pairs=None, toggle=False):
+        self.prob = pl.LpProblem("Paper_Distribution", pl.LpMinimize)
+        self.formulated = False
+        self.solved = False
+        self.students = range(n)
+        if pairs != None:
+            self.pairs = pairs
+        else:
+            # If there aren't a list of pairs, then we just select all of them
+            self.pairs = pl.combination(self.students, 2)
+        self.choices = {}  # This will contain our decision variables
+        self.toggle = toggle
+
+    def _formulate_model(self):
+        valid_match = lambda m: m[0] != m[1][0] and m[0] != m[1][1]
+        all_assignments = filter(valid_match, product(self.students, self.pairs))
+
+        # Contains all the valid assignments for a student
+        student_assignments = defaultdict(list)
+
+        # Contains all the possible pairs for a grader that contain another student
+        # For example student_contains[(0, 3)] = [0_(1,3), 0_(2,3), 0_(3,4), 0_(3,5)]
+        student_contains = defaultdict(list)
+
+        # Contains all the students a pair could be assigned to
+        pair_contains = defaultdict(list)
+
+        for asin in all_assignments:
+            grader, (p1, p2) = asin
+            var_name = f"{grader}-({p1},{p2})"
+            var = pl.LpVariable(var_name, 0, 1, cat="Binary")
+
+            self.choices[asin] = var
+            student_assignments[grader].append(var)
+
+            student_contains[(grader, p1)].append(var)
+            student_contains[(grader, p2)].append(var)
+
+            pair_contains[(p1, p2)].append(var)
+
+        for asins in pair_contains.values():
+            # Each pair is only assigned once
+            # self.prob += pl.lpSum(asins) >= 1
+            self.prob += pl.lpSum(asins) == 1
+
+        grader_pairs = pl.combination(self.students, 2)
+        for i, (grader_1, grader_2) in enumerate(grader_pairs):
+            # Every student is assigned a number of papers.
+            # The difference in the number of papers assigned to each student
+            # must not differ by more than 1
+            # For example [a:5, b:5, c:3] is invalid since 5 - 3 = 2
+            # but [a:5, b:5, c:4] is valid
+
+            sum1 = student_assignments[grader_1]
+            sum2 = student_assignments[grader_2]
+
+            abs_var = pl.LpVariable(f"abs_{i}", lowBound=0, cat="Integer")
+            self.prob += abs_var >= pl.lpSum(sum1) - pl.lpSum(sum2)
+            self.prob += abs_var >= pl.lpSum(sum2) - pl.lpSum(sum1)
+            self.prob += abs_var <= 1
+
+        if not self.toggle:
+            c = pl.LpVariable("c", lowBound=0, cat="Integer")
+            for asins in student_contains.values():
+                # Every student marks an amount of another student's paper.
+                # For example for the assignment:
+                # a:[(b,c), (c, d)]
+                # (a,b) = 1, (a,c) = 2 and (a,d) = 1 since a marks c's paper twice
+                # So here were looping over all such combinations and setting c to be the maximum of these values
+                self.prob += pl.lpSum(asins) <= c
+
+            # C is our objective function that we're trying to minimise
+            self.prob += c
+        else:
+            self.prob += 0
+        self.formulated = True
+
+    def _solve(self, show_msg=False):
+        if not self.formulated:
+            self._formulate_model()
+
+        self.prob.solve(pl.GUROBI_CMD(msg=show_msg))
+        self.solved = True
+
+    def print_solution(self):
+        if not self.solved:
+            self._solve()
+
+        for c in self.choices:
+            grader, (p1, p2) = c
+            active = pl.value(self.choices[c]) == 1.0
+            if active:
+                print(f"{grader}: ({p1}, {p2})")
+
+    def get_solution(self):
+        if not self.solved:
+            self._solve()
+
+        solution_dict = defaultdict(list)
+        for c in self.choices:
+            grader, (p1, p2) = c
+            active = pl.value(self.choices[c]) == 1.0
+            if active:
+                solution_dict[grader].append((p1, p2))
+
+        return solution_dict
+```
+
 
 ## Program features and UI design
+
+![Screenshot of my GUI](./figures/gui_screencap.png)
+
+The program has 4 main panels:
+
+- Classroom generation
+- Matchup generation
+- Assignment
+- Ranking
+
+Classroom generation allows you to select the number of students and adjust their test scores. The test scores are the ground truth ranking. 
+
+Matchup generation is a panel that generates a graph with a user selectable number of edges. It also features a graph preview option that produces an `svg` of your graph. To do this I utilised graphviz. 
+
+The assignment panel only has one button. It runs the matchup distribution algorithm and show you the result. 
+
+Finally, the ranking tab lets you choose from a number of ranking methods and provides you with the ranking itself and the efficacy of the method. It's sorted by the Kendall tau score to allow you to quickly check which method provides the best result. 
+
+Thanks to the GUI framework I used `dearpygui` each panel has a consistent look and theme. There is also error handling in all the input that prevent you from loading in invalid data. Also all the inputs should be familiar to computer users, as I've only stuck to basic buttons, input boxes and checkboxes.
+
+All the buttons are reactive. For example, if you change the number of stduents, the set of matchups and assignments will also change to reflect this. Each panel acts as a window that the user can drag around and collapse.
+
 
 # Evaluation
 

@@ -1,6 +1,7 @@
 import distribute_papers as dp
 from graph_utils import random_cycle
 
+
 def tourney_merge(t1, t2):
     acc = {}
     for grader in t1:
@@ -9,7 +10,8 @@ def tourney_merge(t1, t2):
         acc[grader] = l1 + l2
 
     return acc
-        
+
+
 def run_iterative_tourney(n, rounds, ranker, tourney_generator):
     """
     n: number of players
@@ -21,7 +23,7 @@ def run_iterative_tourney(n, rounds, ranker, tourney_generator):
     pairs = random_cycle(n)
     assigner = dp.PaperDistributor(n, pairs)
     assignments = assigner.get_solution()
-    
+
     full_tournament = tourney_generator.generate_tournament(assignments)
     ranking = ranker(full_tournament)
 

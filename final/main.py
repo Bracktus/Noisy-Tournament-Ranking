@@ -8,8 +8,8 @@ from generate_tourney import TournamentGenerator
 
 
 def main():
-    n = 33
-    papers = 11
+    n = 25
+    papers = 13
 
     classroom = Classroom(n, malicious=False)
     real = classroom.get_true_ranking()

@@ -2,6 +2,7 @@ from itertools import product
 from collections import defaultdict
 import pulp as pl
 
+
 class PaperDistributor:
     def __init__(self, n, pairs=None, toggle=False):
         self.prob = pl.LpProblem("Paper_Distribution", pl.LpMinimize)
