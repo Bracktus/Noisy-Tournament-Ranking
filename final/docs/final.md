@@ -54,7 +54,7 @@ In this case we get a cycle and it is unclear which team is the best. If the tou
 
 Various approaches such as have been used to solve this ranking problem. A survey in [@gonzalez-diaz_paired_2014] has applied Scores, Maximum Likelihood, Fair Bets, Least Squares, Recursive Bucholz and Generalised row sum methods to approach the problem.  
 
-Another perspective on this is that the tournament is made up of edges where each edge has a chance of being wrong (an upset occurred). Taking this view we can try to flip edges until we make the tournament acyclic. This is similar to the Kemeny ranking [@kenyon-mathieu_how_2007] method we use in section 6.4.
+Another perspective on this is that the tournament is made up of edges where each edge has a chance of being wrong (an upset occurred). Taking this view we can try to flip edges until we make the tournament acyclic. This is closely related to the Kemeny ranking [@kenyon-mathieu_how_2007] method we use in section 6.4.
 
 Our project can be viewed as a variation of this concept. In sports, upsets can occur due to various external factors, leading to "noise" in the outcome. However, in our project, the "noise" is concentrated in the peer grader making the pairwise comparison.
 
@@ -78,11 +78,19 @@ Another paper by Lin and Lu [@lin_ecient_nodate] used ideas from the dueling ban
 
 ### Pairwise ranking
 
-For pairwise ranking I've found some previous work that examines noisy rankings. One common method is to model the tournament with a Bradley-Terry Model and uses Maximum Likelihood Estimation to calculate skill levels for students [@shah_case_nodate] [@chen_pairwise_2013].
+One paper uses an augumented version of the Bradley-Terry Model called the Refereed-Bradley-Terry Model [@shah_case_nodate] to incorporate the grader's accuracy into the model. They explore the computational difficulty of computing such a ranking and achieve good results with this.
 
-Another approach for pairwise ranking is graph editing. This is where we flip, remove or add edges to our directed graph to obtain some sort of way to rank the students. For example we could turn it into a directed acyclic graph (DAG) and get a total order [@kenyon-mathieu_how_2007]. Or we could model our tournament as a bipartite graph and apply chain editing to obtain an ordering over the students [@singleton_rankings_2021].
+Another paper by Chen and Bennett [@chen_pairwise_2013] explore the problem of crowdsourced results through ranking with another modification to the Bradley-Terry Model called Crowd-BT. This extention, can detect spammers and ill informed agents.
 
-In terms of edge colouring, this paper [@januario_edge_2016] explores local search for solving the edge colouring problem in sports scheduling. Another paper discusses the closely related problem of assignment of papers in scientific peer review [@stelmakh_peerreview4all_2019].
+A related problem is the Feedback Arc Set on Tournaments. This is where we flip edges in our directed graph to arrive at a directed acyclic graph (DAG) in the fewest number of moves. One paper [@kenyon-mathieu_how_2007] describes a polynomial time approximation scheme (PTAS) algorithm to find this. 
+
+Another graph editing approach is chain editing. We can model our tournamnet as a bipartite graph and apply chain editing to obtain an ordering over the students [@singleton_rankings_2021]. Chain editing finds the minimum number of edge changes required to form a chain graph. 
+
+### Paper assignment
+
+One paper [@januario_edge_2016] explores local search for solving the edge colouring problem in sports scheduling. They also describe linear time algorithm for finding an edge colouring of a complete graph with $n - 1$ colours, where $n$ is the number of nodes. 
+
+Another paper discusses the closely related problem of assignment of papers in scientific peer review [@stelmakh_peerreview4all_2019]. They describe an algorithm to achieve a min-max fair assignment. The max-min fair assignment also ensures that in any other assignment there exists at least one paper with the fate at least as bad as the fate of the most disadvantaged paper in the aforementioned fair assignment.
 
 # Introduction
 
@@ -1039,12 +1047,6 @@ $$f(v, a, b) = \frac{1}{1+e^{-(0.5 \cdot t(v) + 0.5)(t(a) - t(b))}}$$
 
 The issue with this is that, if we generate data with this, then clearly RBTL will perform much better than the other ranking methods since the data was generated with the RBTL's probability function. This means that the comparisons will not be accurate.
 
-Ideally, we would like a different function $f$ with the same properties:
-
-- Takes into account grader $v$'s skill
-- Takes into account difference between student $a$ and student $b$'s skill
-
-However, I'll leave this up to future work.
 
 ## Technology Choices
 
@@ -1083,121 +1085,6 @@ I've mainly used an OOP style mixed with a few pure functions where using a clas
 
 This style also allowed me to quickly build up my GUI once I had finished the command line version. Each button is linked to a function of one of the modules, all the state is encapsulated in these classes so the GUI code is relatively simple. 
 
-```Python
-from itertools import product
-from collections import defaultdict
-import pulp as pl
-
-class PaperDistributor:
-    def __init__(self, n, pairs=None, toggle=False):
-        self.prob = pl.LpProblem("Paper_Distribution", pl.LpMinimize)
-        self.formulated = False
-        self.solved = False
-        self.students = range(n)
-        if pairs != None:
-            self.pairs = pairs
-        else:
-            # If there aren't a list of pairs, then we just select all of them
-            self.pairs = pl.combination(self.students, 2)
-        self.choices = {}  # This will contain our decision variables
-        self.toggle = toggle
-
-    def _formulate_model(self):
-        valid_match = lambda m: m[0] != m[1][0] and m[0] != m[1][1]
-        all_assignments = filter(valid_match, product(self.students, self.pairs))
-
-        # Contains all the valid assignments for a student
-        student_assignments = defaultdict(list)
-
-        # Contains all the possible pairs for a grader that contain another student
-        # For example student_contains[(0, 3)] = [0_(1,3), 0_(2,3), 0_(3,4), 0_(3,5)]
-        student_contains = defaultdict(list)
-
-        # Contains all the students a pair could be assigned to
-        pair_contains = defaultdict(list)
-
-        for asin in all_assignments:
-            grader, (p1, p2) = asin
-            var_name = f"{grader}-({p1},{p2})"
-            var = pl.LpVariable(var_name, 0, 1, cat="Binary")
-
-            self.choices[asin] = var
-            student_assignments[grader].append(var)
-
-            student_contains[(grader, p1)].append(var)
-            student_contains[(grader, p2)].append(var)
-
-            pair_contains[(p1, p2)].append(var)
-
-        for asins in pair_contains.values():
-            # Each pair is only assigned once
-            # self.prob += pl.lpSum(asins) >= 1
-            self.prob += pl.lpSum(asins) == 1
-
-        grader_pairs = pl.combination(self.students, 2)
-        for i, (grader_1, grader_2) in enumerate(grader_pairs):
-            # Every student is assigned a number of papers.
-            # The difference in the number of papers assigned to each student
-            # must not differ by more than 1
-            # For example [a:5, b:5, c:3] is invalid since 5 - 3 = 2
-            # but [a:5, b:5, c:4] is valid
-
-            sum1 = student_assignments[grader_1]
-            sum2 = student_assignments[grader_2]
-
-            abs_var = pl.LpVariable(f"abs_{i}", lowBound=0, cat="Integer")
-            self.prob += abs_var >= pl.lpSum(sum1) - pl.lpSum(sum2)
-            self.prob += abs_var >= pl.lpSum(sum2) - pl.lpSum(sum1)
-            self.prob += abs_var <= 1
-
-        if not self.toggle:
-            c = pl.LpVariable("c", lowBound=0, cat="Integer")
-            for asins in student_contains.values():
-                # Every student marks an amount of another student's paper.
-                # For example for the assignment:
-                # a:[(b,c), (c, d)]
-                # (a,b) = 1, (a,c) = 2 and (a,d) = 1 since a marks c's paper twice
-                # So here were looping over all such combinations and setting c to be the maximum of these values
-                self.prob += pl.lpSum(asins) <= c
-
-            # C is our objective function that we're trying to minimise
-            self.prob += c
-        else:
-            self.prob += 0
-        self.formulated = True
-
-    def _solve(self, show_msg=False):
-        if not self.formulated:
-            self._formulate_model()
-
-        self.prob.solve(pl.GUROBI_CMD(msg=show_msg))
-        self.solved = True
-
-    def print_solution(self):
-        if not self.solved:
-            self._solve()
-
-        for c in self.choices:
-            grader, (p1, p2) = c
-            active = pl.value(self.choices[c]) == 1.0
-            if active:
-                print(f"{grader}: ({p1}, {p2})")
-
-    def get_solution(self):
-        if not self.solved:
-            self._solve()
-
-        solution_dict = defaultdict(list)
-        for c in self.choices:
-            grader, (p1, p2) = c
-            active = pl.value(self.choices[c]) == 1.0
-            if active:
-                solution_dict[grader].append((p1, p2))
-
-        return solution_dict
-```
-
-
 ## Program features and UI design
 
 ![Screenshot of my GUI](./figures/gui_screencap.png)
@@ -1225,6 +1112,8 @@ All the buttons are reactive. For example, if you change the number of stduents,
 # Evaluation
 
 ## Closeness - Kendall tau distance 
+
+In section 3.2 we introduced the ground truth ordering. After we apply our ranking method, we obtain another ordering. In order to evaluate the accuracy of our ranking method, we must measure the distance between the two rankings.
 
 In order to measure closeness between 2 total preorders we'll need a distance metric. One common metric is the Kendall tau distance [@kendall_new_1938]. This measures the number of differing pairs in the 2 total preorders.
 
@@ -1267,9 +1156,11 @@ The Kemeny ranking method doesn't plateau though. This is due to the way we calc
 
 An additional result we find is that is that the rankings become more accurate as the number of students increase. This is probably due to the fact that we can obtain more information in general. The number of edges available to mark is $\binom{n}{2}$ in the non-iterative case and $(\binom{n}{2} - (n - 1)) \cdot n$ in the iterative case where $n = |V|$. Therefore, as the number of edges available increases, we'll gain more information and therefore get more accurate rankings.
 
-![Comparison of voting methods for $|V| = 10, 15, 20$](./figures/results.svg)
+There is not a clear difference between the iterative and non-iterative methods before we hit this plateau. 
 
 ![Comparison of voting methods for $|V| = 30$](./figures/results_2.svg) 
+
+![Comparison of voting methods for $|V| = 10, 15, 20$](./figures/results.svg)
 
 Let's take a closer look at the ranking methods themselves. In figure 8, we see the results for a classroom of 30 students. To make a like for like comparison between non-iterative and iterative methods we should only look at data points before '15 papers per student'.
 
@@ -1291,17 +1182,26 @@ In section 5.2.2 we defined our ILP for matchup distribution. One of these const
 
 I've modified the ILP to allow me to toggle this constraint on and off. In figure *!!*, we can see that in fact this constraint does not have much of an effect on our results. 
 
-This may be due to the fact that having all of your matchups concentrated into one student is relatively rare in the first place. In section 7.3.2, we showed that the number of possible assignments blows up extrmely quickly for a cycle graph.
+This may be due to the fact that having all of your matchups concentrated into one student is relatively rare in the first place. In section 7.3.2, we showed that the number of possible assignments blows up extremely quickly for a cycle graph.
 
 I conjecture that the number of possible assignments for a non-cycle graph is much larger and that the proportion of assignments that involve violating the constraint we're toggling on and off many times over is low.
 
-# Future Work
+# Conclusions
 
-Based on this result an alternative idea for ranking may be found. By splitting up the student body into smaller subsets, we can perhaps aggregate the cluster rankings.
+## Future Work
 
-global Uncertainty
+The most obvious area for improvement is my selection of ranking algorithms. I've only implemented 6 in this project, but there are alternatives such as the Thurstone model which is a probabilistic model similar to BTL, and Dodgeson's rule a method from social choice theory that counts the number of changes to a total order to achieve a Condorcet winner. 
 
-faster methods for assignemnt
+Another possible improvement would be for the iterative method. Currently we take a sample of the population and try to pair up the most uncertain pairs within that sample with the best most skilled students within that sample. One idea could be to calculate these values from the entire population and use those values to do assignment. 
+
+faster methods for assignemn
+
+Ideally, we would like a different function $f$ with the same properties:
+
+- Takes into account grader $v$'s skill
+- Takes into account difference between student $a$ and student $b$'s skill
+
+However, I'll leave this up to future work.
 
 better Synthetic data or perhaps real data
 
