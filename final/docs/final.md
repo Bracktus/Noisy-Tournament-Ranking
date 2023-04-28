@@ -90,7 +90,7 @@ Another graph editing approach is chain editing. We can model our tournamnet as 
 
 One paper [@januario_edge_2016] explores local search for solving the edge colouring problem in sports scheduling. They also describe linear time algorithm for finding an edge colouring of a complete graph with $n - 1$ colours, where $n$ is the number of nodes. 
 
-Another paper discusses the closely related problem of assignment of papers in scientific peer review [@stelmakh_peerreview4all_2019]. They describe an algorithm to achieve a min-max fair assignment. The max-min fair assignment also ensures that in any other assignment there exists at least one paper with the fate at least as bad as the fate of the most disadvantaged paper in the aforementioned fair assignment.
+Another paper discusses the closely related problem of assignment of papers in scientific peer review [@stelmakh_peerreview4all_2019]. They describe an algorithm to achieve a min-max fair assignment. The max-min fair assignment ensures that in any assignment there exists at least one paper with the fate at least as bad as the fate of the most disadvantaged paper in the fair assignment.
 
 # Introduction
 
@@ -140,7 +140,7 @@ The correct assessment would be $(v_{i}, v_{j}, v_{k}) \text{ iff } t(v_{j}) \ge
 
 ### Problem Statement
 
-Given $V$ devise $E, A, A'$ and find a relation $\preceq_{t'}$ such that the preorder defined by $\preceq_{t'}$ is 'close to' the preorder defined by $\preceq_{t}$, the ground truth. We will define this closeness metric in the evaluation section. 
+Given $V$ devise $E, A, A'$ and find a relation $\preceq_{t'}$ such that the preorder defined by $\preceq_{t'}$ is 'close to' the preorder defined by $\preceq_{t}$, the ground truth. We will define this closeness metric in section 9.1. 
 
 ### Example 
 
@@ -167,7 +167,8 @@ $$
 
 $$ b \prec_{t} d \prec_{t} a \prec_{t} c $$
 
-![Visualisation of $A$. The colours denote the players. A is red and the edge $(c,d)$ is also red, so $(a, c, d) \in A$.](./figures/fig1.svg){width=80mm}
+![Visualisation of $A$. The colours denote the players. $a$ is red and the edge $(c,d)$ is also red, so $(a, c, d) \in A$.](./figures/fig1.svg){width=80mm} 
+<!-- 1 -->
 
 ## Solution overview
 
@@ -196,6 +197,7 @@ A connected graph is a graph in which for every node, there is a path from it to
 Every time we have an edge incident to a node, we gain some level of information about that node. The information may be of good or poor quality depending on the accuracy of the student that is assigned to the pair. Condition 3 ensures that the information gleaned from each student isn't unbalanced and that we gain at least a baseline amount of information about each student.
 
 ![An unconnected graph in which we can't compare $a$, $b$, $c$ to the main cohort](./figures/fig2.svg){width=65mm}
+<!-- 2 -->
 
 ## Method 1 - Regular Graphs
 
@@ -217,6 +219,9 @@ If $k$ is odd and $nk$ must be even, then $n$ must be even. The opposite vertex 
 \begin{figure}[]
 \caption{$k=3, n=6$ on the left, $k=4, n=6$ on the right}
 \end{figure}
+
+<!-- 3 -->
+
 
 If $k \geq 2$, then for each node, it will be connected to its nearest 2 neighbours. Therefore, every graph where $k \geq 2$ will have a cycle as a subgraph and will be connected, satisfying condition 2.
 
@@ -245,6 +250,8 @@ The second approach builds up the graph in stages.
 9. Go to step 5.
 
 ![$n=9$ after 13 iterations, $|E| = 22$](./figures/method2.svg){width=50mm}
+
+<!-- 4 -->
 
 This fulfils condition 1 since we can provide the number of nodes and edges as input to this function. (As long as $|E| \geq |V|$).
 
@@ -446,6 +453,8 @@ The ranking would be $\{b, d, e\} \preceq_{t'} a \preceq_{t'} c$.
 With a low number of students ties are common, as we increase the size of $V$, we encounter ties less often. In practice, we would pick an arbitrary ordering of the tied students.
 
 ![A visualisation of $A'$. You can also calculate $WinCount(n)$ by calculating $outdegree(n)$](./figures/fig3.svg){width=55mm}
+
+<!-- 5 -->
 
 ## Borda Count
 
@@ -995,15 +1004,15 @@ define simulated_annealing(TL, TI, C, S, neigh, init_sol, obj) {
 One thing to note is that the stopping condition here is given as a function of iterations. In practice, we can use other stopping conditions.
 Also for efficiency, we calculate the value of `curr_cost` based on `neigh(curr_sol)` instead of recalculating from scratch.
 
-## The size of $A$
+## The size of $E$
 
-As we increase the size of $A$, the workload of the students also increases. We want to strike a balance between obtaining more information to obtain an accurate ranking and not overburdening our students with too much work.
+As we increase the size of $E$, more matchups need to be assessed and the workload of the students also increases. We want to strike a balance between obtaining more information to obtain an accurate ranking and not overburdening our students with too much work.
 
 The total number of pairs that each player is $\binom{n}{2} = \frac{1}{2} n(n - 1)$. This scales quadratically, so if we gave every pair to every student. Then as the number of students increases, it'll quickly become infeasible to mark them all.
 
 However, if we divide all the matchups along all the students, the number of matchups will scale linearly. Of course, this means we'll receive less information.
 
-| Number of students | $\binom{n}{2}$ | $\binom{n}{2} \div n$   |
+| Number of students | $\binom{n}{2}$ | $\binom{n}{2} \div n$    |
 |--------------------|----------------|--------------------------|
 | 5                  | 10             | 2                        |
 | 10                 | 45             | 4.5                      |
@@ -1024,7 +1033,7 @@ To do this we'll perform the following steps:
 
 1. Give every student $v$ a random score based on a normal distribution, $\mu = 0.5, \sigma = 0.25$. This score will be clamped into the range $[0, 1]$. Let's call this score $t(v)$.
 2. For every assignment in $A'$ generate a random number $r$ in the range $[0, 1]$.
-3. Check if $g(v) > r$. Where $g = f \circ t, \, f: [0, 1] \rightarrow [0, 1]$. This is the grading skill of the player. $f$ is a mapping from test score to grading skill. 
+3. Check if $g(v) > r$. Where $g = f \circ t, \, f: [0, 1] \rightarrow [0, 1]$. $g(v)$ is the grading skill of the player $v$. $f$ is a mapping from test score to grading skill. 
 4. If so, then the student marks the matchup correctly, otherwise, the student marks the matchup incorrectly. Add this result to the set $A'$.
 
 ### Issues, my approach and alternative approaches
@@ -1046,7 +1055,6 @@ If we take $w_{v} = t(v)$, then we get our function $f$:
 $$f(v, a, b) = \frac{1}{1+e^{-(0.5 \cdot t(v) + 0.5)(t(a) - t(b))}}$$
 
 The issue with this is that, if we generate data with this, then clearly RBTL will perform much better than the other ranking methods since the data was generated with the RBTL's probability function. This means that the comparisons will not be accurate.
-
 
 ## Technology Choices
 
@@ -1089,6 +1097,9 @@ This style also allowed me to quickly build up my GUI once I had finished the co
 
 ![Screenshot of my GUI](./figures/gui_screencap.png)
 
+<!-- 6 -->
+
+
 The program has 4 main panels:
 
 - Classroom generation
@@ -1107,7 +1118,6 @@ Finally, the ranking tab lets you choose from a number of ranking methods and pr
 Thanks to the GUI framework I used `dearpygui` each panel has a consistent look and theme. There is also error handling in all the input that prevent you from loading in invalid data. Also all the inputs should be familiar to computer users, as I've only stuck to basic buttons, input boxes and checkboxes.
 
 All the buttons are reactive. For example, if you change the number of stduents, the set of matchups and assignments will also change to reflect this. Each panel acts as a window that the user can drag around and collapse.
-
 
 # Evaluation
 
@@ -1144,7 +1154,7 @@ The reason for normalisation is to allow for comparisons between runs where $n$ 
 
 ## Experimental analysis
 
-In figure 7 we can see the Kendall tau scores for our different voting methods. On the x-axis we get the number of matchups per student. For example, if the number of matchups per student is 7, and there are 15 students, then there are $7 \times 15 = 105$ matchups in total.
+In figure 8 we can see the Kendall tau scores for our different voting methods. On the x-axis we get the number of matchups per student. For example, if the number of matchups per student is 7, and there are 15 students, then there are $7 \times 15 = 105$ matchups in total.
 
 As a general trend we can see that in the iterative case, it only gets more and more accurate as we increase the number of matchups. This could be explained by the fact that as we add more matchups, we gain more information about the students and can therefore make a better assessment of their relative rankings.
 
@@ -1158,35 +1168,51 @@ An additional result we find is that is that the rankings become more accurate a
 
 There is not a clear difference between the iterative and non-iterative methods before we hit this plateau. 
 
-![Comparison of voting methods for $|V| = 30$](./figures/results_2.svg) 
+![Comparison of voting methods for $|V| = 30$](./figures/results_2.svg){height=32%}
+
+<!-- 7 -->
 
 ![Comparison of voting methods for $|V| = 10, 15, 20$](./figures/results.svg)
 
-Let's take a closer look at the ranking methods themselves. In figure 8, we see the results for a classroom of 30 students. To make a like for like comparison between non-iterative and iterative methods we should only look at data points before '15 papers per student'.
+<!-- 8 -->
+
+Let's take a closer look at the ranking methods themselves. In figure 7, we see the results for a classroom of 30 students. To make a like for like comparison between non-iterative and iterative methods we should only look at data points before '15 papers per student'.
 
 Looking at the two graphs we can see that both methods perform similarly up to this point with the exception of non-iterative Kemeny which outperforms the other methods by a large margin albeit with a lot of variance. I believe the Kemeny ranking is performing well due to our method of data generation. When we generate data, there is only one thing we take into account: the skill of the grader. Based on this one variable we either output a correct or incorrect pair. The Kemeny ranking tries to minimise these incorrect pairs, assuming that most of the students marked correctly, the Kemeny ranking should perform a lot better than the other methods. This is also why the BTL method performs so poorly. The BTL methods only takes into account the relative difference in skill between 2 students. In the data generation method, this is not taken into account explicitly. It also doesn't take into account the skill of the grade like in the RBTL and weighted Borda methods.
 
 In the non-iterative graph, we can see that most of the methods perform similarly, with the exception of Kemeny and BTL. When we look at the iterative graph we can see that the Iterative BTL performs worse than average which lines up with our analysis of the method. 
 
-If we give each student every matchup excluding their own matches the we can see that all methods (excluding Kemeny) perform very well almost reaching the original ranking. It doesn't seem to improve much past the 15 papers per student mark. This may be due to the inherent difficulty of reconstructing the original ranking based on noisy data. It seems extremely difficult if not imposisble to get an exact recreation of the original ranking.
+In figure 9 we give each student every matchup excluding their own matches. We can see that all methods (excluding Kemeny) perform very well almost reaching the original ranking. It doesn't seem to improve much past the 15 papers per student mark. This may be due to the inherent difficulty of reconstructing the original ranking based on noisy data. It seems extremely difficult if not imposisble to get an exact recreation of the original ranking.
 
 Despite it's impressive performance in the earlier experiment, the Kemeny method does extremely poorly here. I believe this is also due to simulated annealing. Due to the size of the search space, it becomes challenging to converge to good solution. Futher research and experimentation may be required to find a better approach to finding the Kemeny ranking.
 
 ![Rankings under (almost) complete information](./figures/results_3.svg)
 
+<!-- 9 -->
+
 ## Paper concentration effectiveness
 
 In section 5.2.2 we defined our ILP for matchup distribution. One of these constraints prevented a single student from marking many of another student's work. 
 
-![Comparing a constrained and unconstrained paper distribution algorithm](./figures/results_constraint.svg) 
-
-I've modified the ILP to allow me to toggle this constraint on and off. In figure *!!*, we can see that in fact this constraint does not have much of an effect on our results. 
+I've modified the ILP to allow me to toggle this constraint on and off. In figure 10, we can see that in fact this constraint does not have much of an effect on our results. 
 
 This may be due to the fact that having all of your matchups concentrated into one student is relatively rare in the first place. In section 7.3.2, we showed that the number of possible assignments blows up extremely quickly for a cycle graph.
 
-I conjecture that the number of possible assignments for a non-cycle graph is much larger and that the proportion of assignments that involve violating the constraint we're toggling on and off many times over is low.
+I conjecture that the number of possible assignments for a non-cycle graph is much larger and that the proportion of assignments that involve violating the constraint we're toggling on and off many times over is low. Therefore, we in fact do not require this constrain in the vast majority of cases.
+
+![Comparing a constrained and unconstrained paper distribution algorithm](./figures/results_constraint.svg) 
+
+<!-- 10 -->
 
 # Conclusions
+
+In this project we've explored tournament peer ranking. We touched on 3 main aspects of this process.  
+
+- Creating the set of matchups in the tournament
+- Distributing the matchups to the students
+- Applying the ranking method
+
+We also explored an interative version of our system and implemented it and some basic empirical analysis was done to show the efficacy of these methods.
 
 ## Future Work
 
@@ -1194,16 +1220,23 @@ The most obvious area for improvement is my selection of ranking algorithms. I'v
 
 Another possible improvement would be for the iterative method. Currently we take a sample of the population and try to pair up the most uncertain pairs within that sample with the best most skilled students within that sample. One idea could be to calculate these values from the entire population and use those values to do assignment. 
 
-faster methods for assignemn
+An idea to explore would be other algorithms and methods for matchup assignment. Perhaps there are exact methods for this in polynomial time or LP relaxations of the problem that yield good results. 
 
-Ideally, we would like a different function $f$ with the same properties:
+I think the largest issue with this is that the synthetic data generation method doesn't reflect reality. Given an assignment $(v, a, b)$, we need a method that takes in to account two addition aspects. 
 
-- Takes into account grader $v$'s skill
-- Takes into account difference between student $a$ and student $b$'s skill
+- The grader $v$'s skill
+- The difference between student $a$ and student $b$'s skill 
 
-However, I'll leave this up to future work.
+The RBTL model fits both of these criteria. However, we if we were to use it then it result in RBTL being the best ranker. A better idea may be to collect real data to analyse, that way we can apply our results to reality. 
 
-better Synthetic data or perhaps real data
+## Reflection on learning
 
+Over this project I've picked up various skills. This project took place over many months and required me to build up time management skills. Breaking up tasks into small units and deciding on the proportion of time I would spend on each part were skills I built up over time.
+
+In addition, I also learned a lot about writing large programs. Because I built up the ideas for voting as I wrote the program, the requirements changed often. As a result the program had to go through a lot of revisions. Therefore, I was forced to write it in a modular way allowing me to change parts of it quickly and often without impacting other modules. These software design skills will be transferable to other projects.
+
+I've developed my mathematics knowledge and feel more confident in using maths to solve ambiguous problems. In particular I've gained a better understanding of how to model problems and use tools like Integer Linear Programs and Maximum Likelihood Estimation to solve them. 
+
+I've had to think about how to communicate precisely and clearly to a reader. This applies to both the report and the code itself as I found myself coming back to code I hadn't touched in a while, finding it difficult to understand and rewriting it to be more clear with extra comments and explanatory variables.
 
 # References
